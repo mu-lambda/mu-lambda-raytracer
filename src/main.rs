@@ -22,7 +22,7 @@ fn ray_color(ray: &Ray) -> Color {
     let sphere_center = Point3::new(0.0, 0.0, -1.0);
     let sphere_radius = 0.5;
 
-    if (hit_sphere(&sphere_center, sphere_radius, ray)) {
+    if hit_sphere(&sphere_center, sphere_radius, ray) {
         return Color::new(1.0, 0.0, 0.0);
     }
 
