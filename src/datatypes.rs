@@ -1,3 +1,4 @@
+use rand::Rng;
 use std::io::Write;
 use std::ops;
 
@@ -10,6 +11,24 @@ impl Vec3 {
     pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
         Vec3 {
             e: { [e0, e1, e2] },
+        }
+    }
+
+    pub fn random(min: f64, max: f64) -> Vec3 {
+        let mut rng = rand::thread_rng();
+        Vec3::new(
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
         }
     }
 
@@ -159,10 +178,28 @@ impl ops::Mul<Vec3> for f64 {
 pub type Point3 = Vec3;
 pub type Color = Vec3;
 
-pub fn write_color(color: &Color, w: &mut dyn Write) -> std::io::Result<()> {
-    let ir = (255.999f64 * color.r()) as i32;
-    let ig = (255.999f64 * color.g()) as i32;
-    let ib = (255.999f64 * color.b()) as i32;
+fn clamp(x: f64, min: f64, max: f64) -> f64 {
+    if x < min {
+        return min;
+    }
+    if x > max {
+        return max;
+    }
+    return x;
+}
+
+pub fn write_color(
+    color: &Color,
+    samples_per_pixel: i32,
+    w: &mut dyn Write,
+) -> std::io::Result<()> {
+    let scale = 1.0f64 / samples_per_pixel as f64;
+    let r = (color.r() * scale).sqrt();
+    let g = (color.g() * scale).sqrt();
+    let b = (color.b() * scale).sqrt();
+    let ir = (255.999f64 * clamp(r, 0.0, 0.99999999)) as i32;
+    let ig = (255.999f64 * clamp(g, 0.0, 0.99999999)) as i32;
+    let ib = (255.999f64 * clamp(b, 0.0, 0.99999999)) as i32;
     writeln!(w, "{} {} {}", ir, ig, ib)
 }
 
