@@ -1,8 +1,8 @@
 use crate::datatypes::{dot, Point3, Ray, Vec3};
 use crate::materials::Material;
 use std::option::Option;
-use std::vec::Vec;
 use std::rc::Rc;
+use std::vec::Vec;
 
 #[derive(Clone)]
 pub struct HitRecord {
@@ -14,7 +14,13 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    fn new_with_face_normal(p: &Point3, t: f64, outward_normal: &Vec3, r: &Ray, material: Rc<dyn Material>) -> HitRecord {
+    fn new_with_face_normal(
+        p: &Point3,
+        t: f64,
+        outward_normal: &Vec3,
+        r: &Ray,
+        material: Rc<dyn Material>,
+    ) -> HitRecord {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face {
             outward_normal.clone()
@@ -39,7 +45,7 @@ pub trait Hittable {
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    material: Rc<dyn Material>
+    material: Rc<dyn Material>,
 }
 
 impl Sphere {
@@ -80,7 +86,13 @@ impl Hittable for Sphere {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, self.material.clone()));
+        return Some(HitRecord::new_with_face_normal(
+            &p,
+            t,
+            &normal,
+            r,
+            self.material.clone(),
+        ));
     }
 }
 

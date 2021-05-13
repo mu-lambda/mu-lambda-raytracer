@@ -1,29 +1,29 @@
 mod camera;
 mod datatypes;
-mod materials;
 mod hittable;
+mod materials;
 
-use std::io::{self, Write};
-use std::rc::Rc;
 use camera::Camera;
 use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 use hittable::{Hittable, HittableList};
-use materials::{Material, Lambertian};
+use materials::{Lambertian, Material};
 use rand::Rng;
+use std::io::{self, Write};
+use std::rc::Rc;
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
-    if depth == 0 {
+    if depth <= 0 {
         return Color::ZERO;
     }
     match world.hit(ray, 0.001, f64::INFINITY) {
-        Some(h) => {
-            let target: Point3 = h.p + h.normal + Vec3::random_in_hemisphere(&h.normal);
-            let new_ray = Ray {
-                orig: h.p,
-                dir: target - h.p,
-            };
-            return 0.5 * ray_color(&new_ray, world, depth - 1);
-        }
+        Some(h) => match h.material.scatter(ray, &h) {
+            Some((attenuation, scattered)) => {
+                return attenuation * ray_color(&scattered, world, depth - 1);
+            }
+            None => {
+                return Color::ZERO;
+            }
+        },
         None => {
             let white: Color = Color::new(1.0f64, 1.0f64, 1.0f64);
             let blueish: Color = Color::new(0.5f64, 0.7f64, 1.0f64);
@@ -44,9 +44,10 @@ fn main() {
 
     // World
     let mut world = HittableList::new();
-    let lambertian:Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.5, 0.0, 0.0)));
-    world.push_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, &lambertian);
-    world.push_sphere(Point3::new(0.0, -100.5, -1.0), 100.0, &lambertian);
+    let small_sph_mat: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(1.0, 0.0, 0.0)));
+    let large_sph_mat: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.0)));
+    world.push_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, &small_sph_mat);
+    world.push_sphere(Point3::new(0.0, -100.5, -1.0), 100.0, &large_sph_mat);
 
     // Camera
     let cam = Camera::new();
