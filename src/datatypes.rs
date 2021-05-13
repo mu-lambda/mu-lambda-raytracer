@@ -258,6 +258,9 @@ pub struct Ray {
 }
 
 impl Ray {
+    pub fn new(orig: Point3, dir: Vec3) -> Ray {
+        Ray { orig, dir }
+    }
     pub fn at(&self, t: f64) -> Point3 {
         &self.orig + &(t * &self.dir)
     }
