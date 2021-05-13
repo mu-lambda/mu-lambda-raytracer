@@ -1,17 +1,20 @@
 use crate::datatypes::{dot, Point3, Ray, Vec3};
+use crate::materials::Material;
 use std::option::Option;
 use std::vec::Vec;
+use std::rc::Rc;
 
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Clone)]
 pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
+    pub material: Rc<dyn Material>,
 }
 
 impl HitRecord {
-    fn new_with_face_normal(p: &Point3, t: f64, outward_normal: &Vec3, r: &Ray) -> HitRecord {
+    fn new_with_face_normal(p: &Point3, t: f64, outward_normal: &Vec3, r: &Ray, material: Rc<dyn Material>) -> HitRecord {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face {
             outward_normal.clone()
@@ -23,6 +26,7 @@ impl HitRecord {
             normal,
             t,
             front_face,
+            material,
         };
     }
 }
@@ -31,17 +35,19 @@ pub trait Hittable {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Clone)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Rc<dyn Material>
 }
 
 impl Sphere {
-    pub fn new(center: &Point3, radius: f64) -> Sphere {
+    pub fn new(center: &Point3, radius: f64, material: &Rc<dyn Material>) -> Sphere {
         Sphere {
             center: *center,
             radius,
+            material: material.clone(),
         }
     }
     pub fn center(&self) -> Point3 {
@@ -74,7 +80,7 @@ impl Hittable for Sphere {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r));
+        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, self.material.clone()));
     }
 }
 
@@ -91,8 +97,8 @@ impl HittableList {
     pub fn push(&mut self, v: Box<dyn Hittable>) {
         self.contents.push(v);
     }
-    pub fn push_sphere(&mut self, center: Point3, radius: f64) {
-        self.push(Box::new(Sphere::new(&center, radius)));
+    pub fn push_sphere(&mut self, center: Point3, radius: f64, material: &Rc<dyn Material>) {
+        self.push(Box::new(Sphere::new(&center, radius, material)));
     }
 }
 
@@ -104,8 +110,8 @@ impl Hittable for HittableList {
         for o in self.contents.iter() {
             match o.hit(r, t_min, closest_so_far) {
                 Some(h) => {
+                    closest_so_far = h.t;
                     result = Some(h);
-                    closest_so_far = h.t
                 }
                 None => {}
             }

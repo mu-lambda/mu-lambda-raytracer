@@ -1,20 +1,23 @@
-use std::io::{self, Write};
 mod camera;
 mod datatypes;
+mod materials;
 mod hittable;
 
+use std::io::{self, Write};
+use std::rc::Rc;
 use camera::Camera;
 use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 use hittable::{Hittable, HittableList};
+use materials::{Material, Lambertian};
 use rand::Rng;
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth == 0 {
         return Color::ZERO;
     }
-    match world.hit(ray, 0.0, f64::INFINITY) {
+    match world.hit(ray, 0.001, f64::INFINITY) {
         Some(h) => {
-            let target: Point3 = h.p + h.normal + Vec3::random_in_unit_sphere();
+            let target: Point3 = h.p + h.normal + Vec3::random_in_hemisphere(&h.normal);
             let new_ray = Ray {
                 orig: h.p,
                 dir: target - h.p,
@@ -41,8 +44,9 @@ fn main() {
 
     // World
     let mut world = HittableList::new();
-    world.push_sphere(Point3::new(0.0, 0.0, -1.0), 0.5);
-    world.push_sphere(Point3::new(0.0, -100.5, -1.0), 100.0);
+    let lambertian:Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.5, 0.0, 0.0)));
+    world.push_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, &lambertian);
+    world.push_sphere(Point3::new(0.0, -100.5, -1.0), 100.0, &lambertian);
 
     // Camera
     let cam = Camera::new();
@@ -57,7 +61,7 @@ fn main() {
 
         for i in 0..image_width {
             let mut pixel_color = Color::ZERO;
-            for s in 0..samples_per_pixel {
+            for _ in 0..samples_per_pixel {
                 let u = ((i as f64) + rng.gen_range(0.0..1.0)) / (image_width as f64 - 1.0);
                 let v = ((j as f64) + rng.gen_range(0.0..1.0)) / (image_height as f64 - 1.0);
                 let r = cam.get_ray(u, v);

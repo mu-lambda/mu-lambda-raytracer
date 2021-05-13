@@ -32,6 +32,20 @@ impl Vec3 {
         }
     }
 
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+        let in_unit_sphere = Vec3::random_in_unit_sphere();
+        if dot(in_unit_sphere, *normal) > 0.0 {
+            return in_unit_sphere;
+        } else {
+            return -in_unit_sphere;
+        }
+    }
+
+    pub fn near_zero(&self) -> bool {
+        const s: f64 = 1e-8;
+        return self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s;            
+    }
+
     pub const ZERO: Vec3 = Vec3 {
         e: { [0.0, 0.0, 0.0] },
     };
