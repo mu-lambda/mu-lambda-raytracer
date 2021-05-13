@@ -46,11 +46,8 @@ fn main() {
 
     // World
     let mut world = HittableList::new();
-    world.push(Box::new(Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.push(Box::new(Sphere::new(
-        &Point3::new(0.0, -100.5, -1.0),
-        100.0,
-    )));
+    world.push_sphere(Point3::new(0.0, 0.0, -1.0), 0.5);
+    world.push_sphere(Point3::new(0.0, -100.5, -1.0), 100.0);
 
     // Camera
     let viewport_height = 2.0f64;

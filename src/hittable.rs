@@ -91,6 +91,9 @@ impl HittableList {
     pub fn push(&mut self, v: Box<dyn Hittable>) {
         self.contents.push(v);
     }
+    pub fn push_sphere(&mut self, center: Point3, radius: f64) {
+        self.push(Box::new(Sphere::new(&center, radius)));
+    }
 }
 
 impl Hittable for HittableList {
