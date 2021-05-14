@@ -4,6 +4,7 @@ mod hittable;
 mod materials;
 
 use camera::Camera;
+use clap::{App, Arg};
 use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 use hittable::{Hittable, HittableList};
 use materials::{Lambertian, Material, Metal};
@@ -34,13 +35,48 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     }
 }
 
+fn args() -> clap::ArgMatches<'static> {
+    App::new("mulambda raytracer")
+        .version("0.1")
+        .arg(
+            Arg::with_name("image_width")
+                .takes_value(true)
+                .default_value("400"),
+        )
+        .arg(
+            Arg::with_name("samples_per_pixel")
+                .takes_value(true)
+                .default_value("200"),
+        )
+        .arg(
+            Arg::with_name("max_depth")
+                .takes_value(true)
+                .default_value("50"),
+        )
+        .get_matches()
+}
+
 fn main() {
+    let matches = args();
+
     // Image
     let aspect_ratio = 16.0f64 / 9.0f64;
-    let image_width = 400;
+    let image_width: i32 = matches
+        .value_of("image_width")
+        .unwrap()
+        .parse::<i32>()
+        .unwrap();
     let image_height = (image_width as f64 / aspect_ratio) as i32;
-    let samples_per_pixel = 100;
-    let max_depth = 50;
+    let samples_per_pixel = matches
+        .value_of("samples_per_pixel")
+        .unwrap()
+        .parse::<i32>()
+        .unwrap();
+    let max_depth = matches
+        .value_of("max_depth")
+        .unwrap()
+        .parse::<i32>()
+        .unwrap();
 
     // World
     let mut world = HittableList::new();
@@ -56,7 +92,7 @@ fn main() {
     world.push_sphere(Vec3::new(1.0, 0.0, -1.0), 0.5, &mat_right);
 
     // Camera
-    let cam = Camera::new();
+    let cam = Camera::new(aspect_ratio);
 
     // Render
     let mut rng = rand::thread_rng();
