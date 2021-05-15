@@ -188,9 +188,9 @@ fn clamp(x: f64, min: f64, max: f64) -> f64 {
     return x;
 }
 
-pub type rgb = (i32, i32, i32);
+pub type RGB = (i32, i32, i32);
 
-pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> rgb {
+pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
     let scale = 1.0f64 / samples_per_pixel as f64;
     let r = (color.r() * scale).sqrt();
     let g = (color.g() * scale).sqrt();

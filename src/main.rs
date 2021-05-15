@@ -5,9 +5,9 @@ mod materials;
 
 use camera::Camera;
 use clap::{App, Arg};
-use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
+use datatypes::{unit_vector, write_color, Color, Ray, Vec3};
 use hittable::{Hittable, HittableList};
-use materials::{Lambertian, Material, Metal};
+use materials::{Dielectric, Lambertian, Material, Metal};
 use rand::Rng;
 use std::io::{self, Write};
 use std::rc::Rc;
@@ -66,13 +66,14 @@ fn main() {
     let mut world = HittableList::new();
 
     let mat_ground: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let mat_center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let mat_left: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.3));
-    let mat_right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.7));
+    let mat_center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.1, 0.3, 0.5)));
+    let mat_left: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
+    let mat_right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
 
     world.push_sphere(Vec3::new(0.0, -100.5, -1.0), 100.0, &mat_ground);
     world.push_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, &mat_center);
     world.push_sphere(Vec3::new(-1.0, 0.0, -1.0), 0.5, &mat_left);
+    world.push_sphere(Vec3::new(-1.0, 0.0, -1.0), -0.4, &mat_left);
     world.push_sphere(Vec3::new(1.0, 0.0, -1.0), 0.5, &mat_right);
 
     // Camera
