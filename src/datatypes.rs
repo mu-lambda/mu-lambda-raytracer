@@ -188,7 +188,9 @@ fn clamp(x: f64, min: f64, max: f64) -> f64 {
     return x;
 }
 
-pub fn write_color(color: &Color, samples_per_pixel: i32, w: &mut dyn Write) -> std::io::Result<()> {
+pub type rgb = (i32, i32, i32);
+
+pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> rgb {
     let scale = 1.0f64 / samples_per_pixel as f64;
     let r = (color.r() * scale).sqrt();
     let g = (color.g() * scale).sqrt();
@@ -196,6 +198,11 @@ pub fn write_color(color: &Color, samples_per_pixel: i32, w: &mut dyn Write) -> 
     let ir = (255.999f64 * clamp(r, 0.0, 0.99999999)) as i32;
     let ig = (255.999f64 * clamp(g, 0.0, 0.99999999)) as i32;
     let ib = (255.999f64 * clamp(b, 0.0, 0.99999999)) as i32;
+    (ir, ig, ib)
+}
+
+pub fn write_color(color: &Color, samples_per_pixel: i32, w: &mut dyn Write) -> std::io::Result<()> {
+    let (ir, ig, ib) = to_rgb(color, samples_per_pixel);
     writeln!(w, "{} {} {}", ir, ig, ib)
 }
 
