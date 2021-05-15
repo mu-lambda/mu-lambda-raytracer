@@ -67,8 +67,8 @@ fn main() {
 
     let mat_ground: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
     let mat_center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let mat_left: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8)));
-    let mat_right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
+    let mat_left: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.3));
+    let mat_right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.7));
 
     world.push_sphere(Vec3::new(0.0, -100.5, -1.0), 100.0, &mat_ground);
     world.push_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, &mat_center);
