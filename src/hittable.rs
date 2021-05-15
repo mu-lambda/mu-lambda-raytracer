@@ -22,18 +22,8 @@ impl HitRecord {
         material: Rc<dyn Material>,
     ) -> HitRecord {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
-        let normal = if front_face {
-            outward_normal.clone()
-        } else {
-            -outward_normal
-        };
-        return HitRecord {
-            p: *p,
-            normal,
-            t,
-            front_face,
-            material,
-        };
+        let normal = if front_face { outward_normal.clone() } else { -outward_normal };
+        return HitRecord { p: *p, normal, t, front_face, material };
     }
 }
 
@@ -50,11 +40,7 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new(center: &Point3, radius: f64, material: &Rc<dyn Material>) -> Sphere {
-        Sphere {
-            center: *center,
-            radius,
-            material: material.clone(),
-        }
+        Sphere { center: *center, radius, material: material.clone() }
     }
     pub fn center(&self) -> Point3 {
         self.center
@@ -86,13 +72,7 @@ impl Hittable for Sphere {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(
-            &p,
-            t,
-            &normal,
-            r,
-            self.material.clone(),
-        ));
+        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, self.material.clone()));
     }
 }
 
@@ -102,9 +82,7 @@ pub struct HittableList {
 
 impl HittableList {
     pub fn new() -> HittableList {
-        HittableList {
-            contents: Vec::new(),
-        }
+        HittableList { contents: Vec::new() }
     }
     pub fn push(&mut self, v: Box<dyn Hittable>) {
         self.contents.push(v);

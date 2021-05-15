@@ -35,49 +35,33 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     }
 }
 
-fn args() -> clap::ArgMatches<'static> {
-    App::new("mulambda raytracer")
+struct Parameters {
+    pub image_width: i32,
+    pub image_height: i32,
+    pub samples_per_pixel: i32,
+    pub max_depth: i32,
+}
+
+fn args(aspect_ratio: f64) -> Parameters {
+    let matches = App::new("mulambda raytracer")
         .version("0.1")
-        .arg(
-            Arg::with_name("image_width")
-                .takes_value(true)
-                .default_value("400"),
-        )
-        .arg(
-            Arg::with_name("samples_per_pixel")
-                .takes_value(true)
-                .default_value("200"),
-        )
-        .arg(
-            Arg::with_name("max_depth")
-                .takes_value(true)
-                .default_value("50"),
-        )
-        .get_matches()
+        .arg(Arg::with_name("image_width").takes_value(true).default_value("400"))
+        .arg(Arg::with_name("samples_per_pixel").takes_value(true).default_value("200"))
+        .arg(Arg::with_name("max_depth").takes_value(true).default_value("50"))
+        .get_matches();
+    let image_width = matches.value_of("image_width").unwrap().parse::<i32>().unwrap();
+    Parameters {
+        image_width,
+        image_height: (image_width as f64 / aspect_ratio) as i32,
+        samples_per_pixel: matches.value_of("samples_per_pixel").unwrap().parse::<i32>().unwrap(),
+        max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
+    }
 }
 
 fn main() {
-    let matches = args();
-
     // Image
     let aspect_ratio = 16.0f64 / 9.0f64;
-    let image_width: i32 = matches
-        .value_of("image_width")
-        .unwrap()
-        .parse::<i32>()
-        .unwrap();
-    let image_height = (image_width as f64 / aspect_ratio) as i32;
-    let samples_per_pixel = matches
-        .value_of("samples_per_pixel")
-        .unwrap()
-        .parse::<i32>()
-        .unwrap();
-    let max_depth = matches
-        .value_of("max_depth")
-        .unwrap()
-        .parse::<i32>()
-        .unwrap();
-
+    let parameters = args(aspect_ratio);
     // World
     let mut world = HittableList::new();
 
@@ -97,20 +81,20 @@ fn main() {
     // Render
     let mut rng = rand::thread_rng();
 
-    println!("P3\n{} {}\n255", image_width, image_height);
-    for j in (0..image_height).rev() {
+    println!("P3\n{} {}\n255", parameters.image_width, parameters.image_height);
+    for j in (0..parameters.image_height).rev() {
         eprint!("\rScanlines remaining: {}    ", j);
         io::stderr().flush().unwrap();
 
-        for i in 0..image_width {
+        for i in 0..parameters.image_width {
             let mut pixel_color = Color::ZERO;
-            for _ in 0..samples_per_pixel {
-                let u = ((i as f64) + rng.gen_range(0.0..1.0)) / (image_width as f64 - 1.0);
-                let v = ((j as f64) + rng.gen_range(0.0..1.0)) / (image_height as f64 - 1.0);
+            for _ in 0..parameters.samples_per_pixel {
+                let u = ((i as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_width as f64 - 1.0);
+                let v = ((j as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_height as f64 - 1.0);
                 let r = cam.get_ray(u, v);
-                pixel_color = pixel_color + ray_color(&r, &world, max_depth);
+                pixel_color = pixel_color + ray_color(&r, &world, parameters.max_depth);
             }
-            write_color(&pixel_color, samples_per_pixel, &mut std::io::stdout());
+            write_color(&pixel_color, parameters.samples_per_pixel, &mut std::io::stdout());
         }
     }
 }

@@ -9,18 +9,12 @@ pub struct Vec3 {
 
 impl Vec3 {
     pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
-        Vec3 {
-            e: { [e0, e1, e2] },
-        }
+        Vec3 { e: { [e0, e1, e2] } }
     }
 
     pub fn random(min: f64, max: f64) -> Vec3 {
         let mut rng = rand::thread_rng();
-        Vec3::new(
-            rng.gen_range(min..max),
-            rng.gen_range(min..max),
-            rng.gen_range(min..max),
-        )
+        Vec3::new(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max))
     }
 
     pub fn random_in_unit_sphere() -> Vec3 {
@@ -50,13 +44,9 @@ impl Vec3 {
         return self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s;
     }
 
-    pub const ZERO: Vec3 = Vec3 {
-        e: { [0.0, 0.0, 0.0] },
-    };
+    pub const ZERO: Vec3 = Vec3 { e: { [0.0, 0.0, 0.0] } };
 
-    pub const ONE: Vec3 = Vec3 {
-        e: { [1.0, 1.0, 1.0] },
-    };
+    pub const ONE: Vec3 = Vec3 { e: { [1.0, 1.0, 1.0] } };
 
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
@@ -90,9 +80,7 @@ impl Vec3 {
 impl ops::Neg for &Vec3 {
     type Output = Vec3;
     fn neg(self) -> Vec3 {
-        Vec3 {
-            e: { [-self.e[0], -self.e[1], -self.e[2]] },
-        }
+        Vec3 { e: { [-self.e[0], -self.e[1], -self.e[2]] } }
     }
 }
 
@@ -113,15 +101,7 @@ impl ops::Add for Vec3 {
 impl ops::Add for &Vec3 {
     type Output = Vec3;
     fn add(self, rhs: Self) -> Vec3 {
-        Vec3 {
-            e: {
-                [
-                    self.e[0] + rhs.e[0],
-                    self.e[1] + rhs.e[1],
-                    self.e[2] + rhs.e[2],
-                ]
-            },
-        }
+        Vec3 { e: { [self.e[0] + rhs.e[0], self.e[1] + rhs.e[1], self.e[2] + rhs.e[2]] } }
     }
 }
 
@@ -135,39 +115,21 @@ impl ops::Sub for Vec3 {
 impl ops::Sub for &Vec3 {
     type Output = Vec3;
     fn sub(self, rhs: Self) -> Vec3 {
-        Vec3 {
-            e: {
-                [
-                    self.e[0] - rhs.e[0],
-                    self.e[1] - rhs.e[1],
-                    self.e[2] - rhs.e[2],
-                ]
-            },
-        }
+        Vec3 { e: { [self.e[0] - rhs.e[0], self.e[1] - rhs.e[1], self.e[2] - rhs.e[2]] } }
     }
 }
 
 impl ops::Mul<f64> for &Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: f64) -> Vec3 {
-        Vec3 {
-            e: { [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs] },
-        }
+        Vec3 { e: { [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs] } }
     }
 }
 
 impl ops::Mul<&Vec3> for &Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: &Vec3) -> Vec3 {
-        Vec3 {
-            e: {
-                [
-                    self.e[0] * rhs.e[0],
-                    self.e[1] * rhs.e[1],
-                    self.e[2] * rhs.e[2],
-                ]
-            },
-        }
+        Vec3 { e: { [self.e[0] * rhs.e[0], self.e[1] * rhs.e[1], self.e[2] * rhs.e[2]] } }
     }
 }
 
@@ -188,9 +150,7 @@ impl ops::Mul<Vec3> for Vec3 {
 impl ops::Div<f64> for &Vec3 {
     type Output = Vec3;
     fn div(self, rhs: f64) -> Vec3 {
-        Vec3 {
-            e: { [self.e[0] / rhs, self.e[1] / rhs, self.e[2] / rhs] },
-        }
+        Vec3 { e: { [self.e[0] / rhs, self.e[1] / rhs, self.e[2] / rhs] } }
     }
 }
 
@@ -228,11 +188,7 @@ fn clamp(x: f64, min: f64, max: f64) -> f64 {
     return x;
 }
 
-pub fn write_color(
-    color: &Color,
-    samples_per_pixel: i32,
-    w: &mut dyn Write,
-) -> std::io::Result<()> {
+pub fn write_color(color: &Color, samples_per_pixel: i32, w: &mut dyn Write) -> std::io::Result<()> {
     let scale = 1.0f64 / samples_per_pixel as f64;
     let r = (color.r() * scale).sqrt();
     let g = (color.g() * scale).sqrt();
