@@ -8,8 +8,13 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64) -> Camera {
-        let viewport_height = 2.0f64;
+    pub fn new(
+        vfov: f64, // vertical field-of-view in degrees
+        aspect_ratio: f64,
+    ) -> Camera {
+        let theta = vfov * std::f64::consts::PI / 180.0;
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;
         let focal_length = 1.0f64;
 

@@ -40,14 +40,21 @@ struct Parameters {
     pub image_height: i32,
     pub samples_per_pixel: i32,
     pub max_depth: i32,
+
+    pub field_of_view: f64, // degrees, (0..180)
+}
+
+fn arg<'a>(name: &'a str, default_value: &'a str) -> Arg<'a, 'a> {
+    Arg::with_name(name).long(name).takes_value(true).default_value(default_value)
 }
 
 fn args(aspect_ratio: f64) -> Parameters {
     let matches = App::new("mulambda raytracer")
         .version("0.1")
-        .arg(Arg::with_name("image_width").takes_value(true).default_value("400"))
-        .arg(Arg::with_name("samples_per_pixel").takes_value(true).default_value("200"))
-        .arg(Arg::with_name("max_depth").takes_value(true).default_value("50"))
+        .arg(arg("image_width", "400"))
+        .arg(arg("samples_per_pixel", "200"))
+        .arg(arg("max_depth", "50"))
+        .arg(arg("field_of_view", "90.0"))
         .get_matches();
     let image_width = matches.value_of("image_width").unwrap().parse::<i32>().unwrap();
     Parameters {
@@ -55,6 +62,8 @@ fn args(aspect_ratio: f64) -> Parameters {
         image_height: (image_width as f64 / aspect_ratio) as i32,
         samples_per_pixel: matches.value_of("samples_per_pixel").unwrap().parse::<i32>().unwrap(),
         max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
+
+        field_of_view: matches.value_of("field_of_view").unwrap().parse::<f64>().unwrap(),
     }
 }
 
@@ -77,7 +86,7 @@ fn main() {
     world.push_sphere(Vec3::new(1.0, 0.0, -1.0), 0.5, &mat_right);
 
     // Camera
-    let cam = Camera::new(aspect_ratio);
+    let cam = Camera::new(parameters.field_of_view, aspect_ratio);
 
     // Render
     let mut rng = rand::thread_rng();
