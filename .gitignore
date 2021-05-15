@@ -2,3 +2,4 @@
 *.rustfmt
 *.swp
 test.ppm
+Session.vim

@@ -40,8 +40,8 @@ impl Vec3 {
     }
 
     pub fn near_zero(&self) -> bool {
-        const s: f64 = 1e-8;
-        return self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s;
+        const S: f64 = 1e-8;
+        return self.e[0].abs() < S && self.e[1].abs() < S && self.e[2].abs() < S;
     }
 
     pub const ZERO: Vec3 = Vec3 { e: { [0.0, 0.0, 0.0] } };
