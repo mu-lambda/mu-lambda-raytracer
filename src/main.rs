@@ -5,7 +5,7 @@ mod materials;
 
 use camera::Camera;
 use clap::{App, Arg};
-use datatypes::{unit_vector, write_color, Color, Ray, Vec3};
+use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 use hittable::{Hittable, HittableList};
 use materials::{Dielectric, Lambertian, Material, Metal};
 use rand::Rng;
@@ -62,7 +62,6 @@ fn args(aspect_ratio: f64) -> Parameters {
         image_height: (image_width as f64 / aspect_ratio) as i32,
         samples_per_pixel: matches.value_of("samples_per_pixel").unwrap().parse::<i32>().unwrap(),
         max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
-
         field_of_view: matches.value_of("field_of_view").unwrap().parse::<f64>().unwrap(),
     }
 }
@@ -86,7 +85,15 @@ fn main() {
     world.push_sphere(Vec3::new(1.0, 0.0, -1.0), 0.5, &mat_right);
 
     // Camera
-    let cam = Camera::new(parameters.field_of_view, aspect_ratio);
+    let cam = Camera::new(
+        Point3::new(-2.0, 2.0, 1.0),
+        Point3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        parameters.field_of_view,
+        aspect_ratio,
+    );
+    //let cam = Camera::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, -1.0), Vec3::new(0.0, 1.0, 0.0),
+    //    parameters.field_of_view, aspect_ratio);
 
     // Render
     let mut rng = rand::thread_rng();
@@ -99,8 +106,10 @@ fn main() {
         for i in 0..parameters.image_width {
             let mut pixel_color = Color::ZERO;
             for _ in 0..parameters.samples_per_pixel {
-                let u = ((i as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_width as f64 - 1.0);
-                let v = ((j as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_height as f64 - 1.0);
+                let u =
+                    ((i as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_width as f64 - 1.0);
+                let v =
+                    ((j as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_height as f64 - 1.0);
                 let r = cam.get_ray(u, v);
                 pixel_color = pixel_color + ray_color(&r, &world, parameters.max_depth);
             }

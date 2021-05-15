@@ -79,19 +79,21 @@ fn reflectance(cos_theta: f64, refraction_ratio: f64) -> f64 {
 impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, h: &hittable::HitRecord) -> Option<(Color, Ray)> {
         let attenuation = Color::new(1.0, 1.0, 1.0);
-        let refraction_ratio = if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
+        let refraction_ratio =
+            if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
 
         let unit_direction = unit_vector(&ray.dir);
         let cos_theta = dot(-unit_direction, h.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
-        let direction =
-            if cannot_refract || reflectance(cos_theta, refraction_ratio) > rand::thread_rng().gen_range(0.0..1.0) {
-                reflect(unit_direction, h.normal)
-            } else {
-                refract(unit_direction, h.normal, refraction_ratio)
-            };
+        let direction = if cannot_refract
+            || reflectance(cos_theta, refraction_ratio) > rand::thread_rng().gen_range(0.0..1.0)
+        {
+            reflect(unit_direction, h.normal)
+        } else {
+            refract(unit_direction, h.normal, refraction_ratio)
+        };
 
         return Some((attenuation, Ray::new(h.p, direction)));
     }

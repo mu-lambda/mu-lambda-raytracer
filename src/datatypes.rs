@@ -201,7 +201,11 @@ pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
     (ir, ig, ib)
 }
 
-pub fn write_color(color: &Color, samples_per_pixel: i32, w: &mut dyn Write) -> std::io::Result<()> {
+pub fn write_color(
+    color: &Color,
+    samples_per_pixel: i32,
+    w: &mut dyn Write,
+) -> std::io::Result<()> {
     let (ir, ig, ib) = to_rgb(color, samples_per_pixel);
     writeln!(w, "{} {} {}", ir, ig, ib)
 }
@@ -212,6 +216,14 @@ pub fn unit_vector(v: &Vec3) -> Vec3 {
 
 pub fn dot(u: Vec3, v: Vec3) -> f64 {
     return u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2];
+}
+
+pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
+    Vec3::new(
+        u.e[1] * v.e[2] - u.e[2] * v.e[1],
+        u.e[2] * v.e[0] - u.e[0] * v.e[2],
+        u.e[0] * v.e[1] - u.e[1] * v.e[0],
+    )
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
