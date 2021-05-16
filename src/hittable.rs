@@ -22,7 +22,7 @@ impl<'a> HitRecord<'_> {
         material: &'b Rc<dyn Material>,
     ) -> HitRecord<'b> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
-        let normal = if front_face { outward_normal.clone() } else { -outward_normal };
+        let normal = if front_face { *outward_normal } else { -outward_normal };
         return HitRecord { p: *p, normal, t, front_face, material };
     }
 }
