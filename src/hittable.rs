@@ -5,22 +5,22 @@ use std::rc::Rc;
 use std::vec::Vec;
 
 #[derive(Clone)]
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub p: Point3,
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
-    pub material: Rc<dyn Material>,
+    pub material: &'a Rc<dyn Material>,
 }
 
-impl HitRecord {
-    fn new_with_face_normal(
+impl<'a> HitRecord<'_> {
+    fn new_with_face_normal<'b>(
         p: &Point3,
         t: f64,
         outward_normal: &Vec3,
         r: &Ray,
-        material: Rc<dyn Material>,
-    ) -> HitRecord {
+        material: &'b Rc<dyn Material>,
+    ) -> HitRecord<'b> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face { outward_normal.clone() } else { -outward_normal };
         return HitRecord { p: *p, normal, t, front_face, material };
@@ -72,7 +72,7 @@ impl Hittable for Sphere {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, self.material.clone()));
+        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, &self.material));
     }
 }
 
