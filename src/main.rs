@@ -87,6 +87,7 @@ fn main() {
     // Image
     let aspect_ratio = 16.0f64 / 9.0f64;
     let parameters = args(aspect_ratio);
+
     // World
     let world = simple_world();
 
