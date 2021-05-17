@@ -192,16 +192,6 @@ impl ops::Mul<Vec3> for f64 {
 pub type Point3 = Vec3;
 pub type Color = Vec3;
 
-fn clamp(x: f64, min: f64, max: f64) -> f64 {
-    if x < min {
-        return min;
-    }
-    if x > max {
-        return max;
-    }
-    return x;
-}
-
 pub type RGB = (i32, i32, i32);
 
 pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
@@ -209,9 +199,9 @@ pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
     let r = (color.r() * scale).sqrt();
     let g = (color.g() * scale).sqrt();
     let b = (color.b() * scale).sqrt();
-    let ir = (255.999f64 * clamp(r, 0.0, 0.99999999)) as i32;
-    let ig = (255.999f64 * clamp(g, 0.0, 0.99999999)) as i32;
-    let ib = (255.999f64 * clamp(b, 0.0, 0.99999999)) as i32;
+    let ir = (255.999f64 * r.clamp(0.0, 0.99999999)) as i32;
+    let ig = (255.999f64 * g.clamp(0.0, 0.99999999)) as i32;
+    let ib = (255.999f64 * b.clamp(0.0, 0.99999999)) as i32;
     (ir, ig, ib)
 }
 
