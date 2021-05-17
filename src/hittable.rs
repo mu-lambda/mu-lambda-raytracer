@@ -1,7 +1,6 @@
 use crate::datatypes::{dot, Point3, Ray, Vec3};
 use crate::materials::Material;
 use std::option::Option;
-use std::rc::Rc;
 use std::vec::Vec;
 
 #[derive(Clone)]
@@ -13,7 +12,7 @@ pub struct HitRecord<'a> {
     pub material: &'a dyn Material,
 }
 
-impl<'a> HitRecord<'_> {
+impl<'a> HitRecord<'a> {
     fn new_with_face_normal(
         p: &Point3,
         t: f64,
