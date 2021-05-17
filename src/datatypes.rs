@@ -17,6 +17,10 @@ impl Vec3 {
         Vec3::new(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max))
     }
 
+    pub fn random_unit() -> Vec3 {
+        Vec3::random(0.0, 1.0)
+    }
+
     pub fn random_in_unit_sphere() -> Vec3 {
         loop {
             let p = Vec3::random(-1.0, 1.0);

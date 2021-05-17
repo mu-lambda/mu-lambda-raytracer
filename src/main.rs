@@ -36,6 +36,8 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
 }
 
 struct Parameters {
+    pub random_world: bool,
+
     pub aspect_ratio: f64,
     pub image_width: i32,
     pub image_height: i32,
@@ -43,7 +45,7 @@ struct Parameters {
     pub max_depth: i32,
 
     pub lookfrom: Point3,
-    pub lookto: Point3,
+    pub lookat: Point3,
     pub up: Vec3,
     pub field_of_view: f64, // degrees, (0..180)
 }
@@ -54,13 +56,15 @@ fn arg<'a>(name: &'a str, default_value: &'a str) -> Arg<'a, 'a> {
 
 fn parse_aspect_ratio(s: &str) -> f64 {
     let v: Vec<&str> = s.split(':').collect();
-    return v[0].parse::<i32>().unwrap() as f64 / v[1].parse::<i32>().unwrap() as f64; 
+    return v[0].parse::<i32>().unwrap() as f64 / v[1].parse::<i32>().unwrap() as f64;
 }
 
 fn parse_vector(s: &str) -> Vec3 {
     let input: Vec<&str> = s.split(',').collect();
     let mut e = [0.0, 0.0, 0.0];
-    for i in 0..3 { e[i] = input[i].parse::<f64>().unwrap(); }
+    for i in 0..3 {
+        e[i] = input[i].parse::<f64>().unwrap();
+    }
 
     Vec3 { e }
 }
@@ -73,13 +77,15 @@ fn args() -> Parameters {
         .arg(arg("samples_per_pixel", "200"))
         .arg(arg("max_depth", "50"))
         .arg(arg("lookfrom", "-2,2,1"))
-        .arg(arg("lookto", "0,0,-1"))
+        .arg(arg("lookat", "0,0,-1"))
         .arg(arg("up", "0,1.0,0"))
         .arg(arg("field_of_view", "90.0"))
+        .arg(Arg::with_name("random_world").long("random_world"))
         .get_matches();
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = matches.value_of("image_width").unwrap().parse::<i32>().unwrap();
     Parameters {
+        random_world: matches.is_present("random_world"),
         aspect_ratio,
         image_width,
         image_height: (image_width as f64 / aspect_ratio) as i32,
@@ -87,7 +93,7 @@ fn args() -> Parameters {
         max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
 
         lookfrom: parse_vector(matches.value_of("lookfrom").unwrap()),
-        lookto: parse_vector(matches.value_of("lookto").unwrap()),
+        lookat: parse_vector(matches.value_of("lookat").unwrap()),
         up: parse_vector(matches.value_of("up").unwrap()),
         field_of_view: matches.value_of("field_of_view").unwrap().parse::<f64>().unwrap(),
     }
@@ -101,11 +107,56 @@ fn simple_world<'a>() -> HittableList<'a> {
 
     let mut world = HittableList::new();
 
-    world.push(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, mat_ground));
-    world.push(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, mat_center));
-    world.push(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
-    world.push(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4, mat_left));
-    world.push(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, mat_right));
+    world.push(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground));
+    world.push(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center));
+    world.push(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
+    world.push(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left));
+    world.push(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right));
+
+    world
+}
+
+fn random_world<'a>() -> HittableList<'a> {
+    let mut world = HittableList::new();
+
+    let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
+    world.push(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
+
+    fn rnd() -> f64 {
+        rand::thread_rng().gen_range(0.0..1.0)
+    }
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rnd();
+            let center = Point3::new(a as f64 + 0.9 * rnd(), 0.2, b as f64 + 0.9 * rnd());
+
+            if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    let albedo = Color::random_unit() * Color::random_unit();
+                    world.push(Sphere::new(center, 0.2, Lambertian::new(albedo)));
+                } else if choose_mat < 0.95 {
+                    let albedo = Color::random(0.5, 1.0);
+                    let fuzz = rand::thread_rng().gen_range(0.0..0.5);
+                    world.push(Sphere::new(center, 0.2, Metal::new(albedo, fuzz)));
+                } else {
+                    world.push(Sphere::new(center, 0.2, Dielectric::new(1.5)));
+                }
+            }
+        }
+    }
+
+    world.push(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)));
+    world.push(Sphere::new(
+        Point3::new(-4.0, 1.0, 0.0),
+        1.0,
+        Lambertian::new(Color::new(0.4, 0.2, 0.1)),
+    ));
+    world.push(Sphere::new(
+        Point3::new(4.0, 1.0, 0.0),
+        1.0,
+        Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
+    ));
 
     world
 }
@@ -115,12 +166,12 @@ fn main() {
     let parameters = args();
 
     // World
-    let world = simple_world();
+    let world = if parameters.random_world { random_world() } else { simple_world() };
 
     // Camera
     let cam = Camera::new(
         parameters.lookfrom,
-        parameters.lookto,
+        parameters.lookat,
         parameters.up,
         parameters.field_of_view,
         parameters.aspect_ratio,
