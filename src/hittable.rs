@@ -14,13 +14,13 @@ pub struct HitRecord<'a> {
 }
 
 impl<'a> HitRecord<'_> {
-    fn new_with_face_normal<'b>(
+    fn new_with_face_normal(
         p: &Point3,
         t: f64,
         outward_normal: &Vec3,
         r: &Ray,
-        material: &'b dyn Material,
-    ) -> HitRecord<'b> {
+        material: &'a dyn Material,
+    ) -> HitRecord<'a> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face { *outward_normal } else { -outward_normal };
         return HitRecord { p: *p, normal, t, front_face, material };
@@ -84,7 +84,7 @@ impl<'a> HittableList<'a> {
     pub fn new() -> HittableList<'a> {
         HittableList { contents: Vec::new() }
     }
-    pub fn push<T : Hittable + 'a>(&mut self, v: T) {
+    pub fn push<T: Hittable + 'a>(&mut self, v: T) {
         self.contents.push(Box::new(v));
     }
 }
