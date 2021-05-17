@@ -38,7 +38,7 @@ pub struct Sphere<'a> {
     material: &'a dyn Material,
 }
 
-impl<'a> Sphere<'a> {
+impl<'a> Sphere<'_> {
     pub fn new(center: Point3, radius: f64, material: &'a dyn Material) -> Sphere<'a> {
         Sphere { center, radius, material }
     }
