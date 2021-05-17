@@ -36,11 +36,15 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
 }
 
 struct Parameters {
+    pub aspect_ratio: f64,
     pub image_width: i32,
     pub image_height: i32,
     pub samples_per_pixel: i32,
     pub max_depth: i32,
 
+    pub lookfrom: Point3,
+    pub lookto: Point3,
+    pub up: Vec3,
     pub field_of_view: f64, // degrees, (0..180)
 }
 
@@ -48,20 +52,43 @@ fn arg<'a>(name: &'a str, default_value: &'a str) -> Arg<'a, 'a> {
     Arg::with_name(name).long(name).takes_value(true).default_value(default_value)
 }
 
-fn args(aspect_ratio: f64) -> Parameters {
+fn parse_aspect_ratio(s: &str) -> f64 {
+    let v: Vec<&str> = s.split(':').collect();
+    return v[0].parse::<i32>().unwrap() as f64 / v[1].parse::<i32>().unwrap() as f64; 
+}
+
+fn parse_vector(s: &str) -> Vec3 {
+    let input: Vec<&str> = s.split(',').collect();
+    let mut e = [0.0, 0.0, 0.0];
+    for i in 0..3 { e[i] = input[i].parse::<f64>().unwrap(); }
+
+    Vec3 { e }
+}
+
+fn args() -> Parameters {
     let matches = App::new("mulambda raytracer")
         .version("0.1")
+        .arg(arg("aspect_ratio", "16:9"))
         .arg(arg("image_width", "400"))
         .arg(arg("samples_per_pixel", "200"))
         .arg(arg("max_depth", "50"))
+        .arg(arg("lookfrom", "-2,2,1"))
+        .arg(arg("lookto", "0,0,-1"))
+        .arg(arg("up", "0,1.0,0"))
         .arg(arg("field_of_view", "90.0"))
         .get_matches();
+    let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = matches.value_of("image_width").unwrap().parse::<i32>().unwrap();
     Parameters {
+        aspect_ratio,
         image_width,
         image_height: (image_width as f64 / aspect_ratio) as i32,
         samples_per_pixel: matches.value_of("samples_per_pixel").unwrap().parse::<i32>().unwrap(),
         max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
+
+        lookfrom: parse_vector(matches.value_of("lookfrom").unwrap()),
+        lookto: parse_vector(matches.value_of("lookto").unwrap()),
+        up: parse_vector(matches.value_of("up").unwrap()),
         field_of_view: matches.value_of("field_of_view").unwrap().parse::<f64>().unwrap(),
     }
 }
@@ -85,19 +112,18 @@ fn simple_world<'a>() -> HittableList<'a> {
 
 fn main() {
     // Image
-    let aspect_ratio = 16.0f64 / 9.0f64;
-    let parameters = args(aspect_ratio);
+    let parameters = args();
 
     // World
     let world = simple_world();
 
     // Camera
     let cam = Camera::new(
-        Point3::new(-2.0, 2.0, 1.0),
-        Point3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
+        parameters.lookfrom,
+        parameters.lookto,
+        parameters.up,
         parameters.field_of_view,
-        aspect_ratio,
+        parameters.aspect_ratio,
     );
     //let cam = Camera::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, -1.0), Vec3::new(0.0, 1.0, 0.0),
     //    parameters.field_of_view, aspect_ratio);
