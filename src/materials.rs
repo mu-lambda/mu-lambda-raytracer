@@ -6,6 +6,7 @@ pub trait Material {
     fn scatter(&self, ray: &Ray, h: &hittable::HitRecord) -> Option<(Color, Ray)>;
 }
 
+#[derive(Clone)]
 pub struct Lambertian {
     pub albedo: Color,
 }
@@ -26,6 +27,7 @@ impl Material for Lambertian {
     }
 }
 
+#[derive(Clone)]
 pub struct Metal {
     pub albedo: Color,
     pub fuzz: f64,
@@ -59,6 +61,7 @@ fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
     r_out_perp + r_out_parallel
 }
 
+#[derive(Clone)]
 pub struct Dielectric {
     pub index_of_refraction: f64,
 }

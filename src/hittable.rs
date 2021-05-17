@@ -10,7 +10,7 @@ pub struct HitRecord<'a> {
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
-    pub material: &'a dyn Material,
+    pub material: &'a Box<dyn Material + 'a>,
 }
 
 impl<'a> HitRecord<'_> {
@@ -19,7 +19,7 @@ impl<'a> HitRecord<'_> {
         t: f64,
         outward_normal: &Vec3,
         r: &Ray,
-        material: &'a dyn Material,
+        material: &'a Box<dyn Material + 'a>,
     ) -> HitRecord<'a> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face { *outward_normal } else { -outward_normal };
@@ -31,16 +31,15 @@ pub trait Hittable {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
-#[derive(Clone)]
 pub struct Sphere<'a> {
     center: Point3,
     radius: f64,
-    material: &'a dyn Material,
+    material: Box<dyn Material + 'a>,
 }
 
 impl<'a> Sphere<'_> {
-    pub fn new(center: Point3, radius: f64, material: &'a dyn Material) -> Sphere<'a> {
-        Sphere { center, radius, material }
+    pub fn new<T: Material + 'a>(center: Point3, radius: f64, material: T) -> Sphere<'a> {
+        Sphere { center, radius, material: Box::new(material) }
     }
     pub fn center(&self) -> Point3 {
         self.center
@@ -50,7 +49,7 @@ impl<'a> Sphere<'_> {
     }
 }
 
-impl Hittable for Sphere<'_> {
+impl<'a> Hittable for Sphere<'a> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = &r.orig - &self.center;
         let a = r.dir.length_squared();
@@ -72,7 +71,7 @@ impl Hittable for Sphere<'_> {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, self.material));
+        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, &self.material));
     }
 }
 

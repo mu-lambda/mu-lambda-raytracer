@@ -66,12 +66,7 @@ fn args(aspect_ratio: f64) -> Parameters {
     }
 }
 
-fn main() {
-    // Image
-    let aspect_ratio = 16.0f64 / 9.0f64;
-    let parameters = args(aspect_ratio);
-    // World
-
+fn simple_world<'a>() -> HittableList<'a> {
     let mat_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let mat_center = Lambertian::new(Color::new(0.1, 0.3, 0.5));
     let mat_left = Dielectric::new(1.5);
@@ -79,11 +74,21 @@ fn main() {
 
     let mut world = HittableList::new();
 
-    world.push(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, &mat_ground));
-    world.push(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, &mat_center));
-    world.push(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, &mat_left));
-    world.push(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4, &mat_left));
-    world.push(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, &mat_right));
+    world.push(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, mat_ground));
+    world.push(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, mat_center));
+    world.push(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
+    world.push(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4, mat_left));
+    world.push(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, mat_right));
+
+    world
+}
+
+fn main() {
+    // Image
+    let aspect_ratio = 16.0f64 / 9.0f64;
+    let parameters = args(aspect_ratio);
+    // World
+    let world = simple_world();
 
     // Camera
     let cam = Camera::new(
