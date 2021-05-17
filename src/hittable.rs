@@ -10,7 +10,7 @@ pub struct HitRecord<'a> {
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
-    pub material: &'a Rc<dyn Material>,
+    pub material: &'a dyn Material,
 }
 
 impl<'a> HitRecord<'_> {
@@ -19,7 +19,7 @@ impl<'a> HitRecord<'_> {
         t: f64,
         outward_normal: &Vec3,
         r: &Ray,
-        material: &'b Rc<dyn Material>,
+        material: &'b dyn Material,
     ) -> HitRecord<'b> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face { *outward_normal } else { -outward_normal };
@@ -32,15 +32,15 @@ pub trait Hittable {
 }
 
 #[derive(Clone)]
-pub struct Sphere {
+pub struct Sphere<'a> {
     center: Point3,
     radius: f64,
-    material: Rc<dyn Material>,
+    material: &'a dyn Material,
 }
 
-impl Sphere {
-    pub fn new(center: &Point3, radius: f64, material: &Rc<dyn Material>) -> Sphere {
-        Sphere { center: *center, radius, material: material.clone() }
+impl<'a> Sphere<'a> {
+    pub fn new(center: Point3, radius: f64, material: &'a dyn Material) -> Sphere<'a> {
+        Sphere { center, radius, material }
     }
     pub fn center(&self) -> Point3 {
         self.center
@@ -50,7 +50,7 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl Hittable for Sphere<'_> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = &r.orig - &self.center;
         let a = r.dir.length_squared();
@@ -72,27 +72,24 @@ impl Hittable for Sphere {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, &self.material));
+        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, self.material));
     }
 }
 
-pub struct HittableList {
-    contents: Vec<Box<dyn Hittable>>,
+pub struct HittableList<'a> {
+    contents: Vec<Box<dyn Hittable + 'a>>,
 }
 
-impl HittableList {
-    pub fn new() -> HittableList {
+impl<'a> HittableList<'a> {
+    pub fn new() -> HittableList<'a> {
         HittableList { contents: Vec::new() }
     }
-    pub fn push(&mut self, v: Box<dyn Hittable>) {
-        self.contents.push(v);
-    }
-    pub fn push_sphere(&mut self, center: Point3, radius: f64, material: &Rc<dyn Material>) {
-        self.push(Box::new(Sphere::new(&center, radius, material)));
+    pub fn push<T : Hittable + 'a>(&mut self, v: T) {
+        self.contents.push(Box::new(v));
     }
 }
 
-impl Hittable for HittableList {
+impl Hittable for HittableList<'_> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut result: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
