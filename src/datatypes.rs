@@ -43,6 +43,16 @@ impl Vec3 {
         }
     }
 
+    pub fn random_in_unit_disk() -> Vec3 {
+        let mut r = rand::thread_rng();
+        loop {
+            let p = Vec3::new(r.gen_range(-1.0..1.0), r.gen_range(-1.0..1.0), 0.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
+
     pub fn near_zero(&self) -> bool {
         const S: f64 = 1e-8;
         return self.e[0].abs() < S && self.e[1].abs() < S && self.e[2].abs() < S;

@@ -7,10 +7,9 @@ use camera::Camera;
 use clap::{App, Arg};
 use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 use hittable::{Hittable, HittableList, Sphere};
-use materials::{Dielectric, Lambertian, Material, Metal};
+use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
 use std::io::{self, Write};
-use std::rc::Rc;
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {
@@ -48,6 +47,8 @@ struct Parameters {
     pub lookat: Point3,
     pub up: Vec3,
     pub field_of_view: f64, // degrees, (0..180)
+    pub aperture: f64,
+    pub focus_dist: f64,
 }
 
 fn arg<'a>(name: &'a str, default_value: &'a str) -> Arg<'a, 'a> {
@@ -80,10 +81,19 @@ fn args() -> Parameters {
         .arg(arg("lookat", "0,0,-1"))
         .arg(arg("up", "0,1.0,0"))
         .arg(arg("field_of_view", "90.0"))
+        .arg(arg("aperture", "0.0"))
+        .arg(Arg::with_name("focus_dist").long("focus_dist").takes_value(true))
         .arg(Arg::with_name("random_world").long("random_world"))
         .get_matches();
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = matches.value_of("image_width").unwrap().parse::<i32>().unwrap();
+    let lookfrom = parse_vector(matches.value_of("lookfrom").unwrap());
+    let lookat = parse_vector(matches.value_of("lookat").unwrap());
+    let focus_dist = match matches.value_of("focus_dist") {
+        None => (lookat - lookfrom).length(),
+        Some(v) => v.parse::<f64>().unwrap(),
+    };
+
     Parameters {
         random_world: matches.is_present("random_world"),
         aspect_ratio,
@@ -91,11 +101,12 @@ fn args() -> Parameters {
         image_height: (image_width as f64 / aspect_ratio) as i32,
         samples_per_pixel: matches.value_of("samples_per_pixel").unwrap().parse::<i32>().unwrap(),
         max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
-
-        lookfrom: parse_vector(matches.value_of("lookfrom").unwrap()),
-        lookat: parse_vector(matches.value_of("lookat").unwrap()),
+        lookfrom,
+        lookat,
         up: parse_vector(matches.value_of("up").unwrap()),
         field_of_view: matches.value_of("field_of_view").unwrap().parse::<f64>().unwrap(),
+        aperture: matches.value_of("aperture").unwrap().parse::<f64>().unwrap(),
+        focus_dist,
     }
 }
 
@@ -175,6 +186,8 @@ fn main() {
         parameters.up,
         parameters.field_of_view,
         parameters.aspect_ratio,
+        parameters.aperture,
+        parameters.focus_dist,
     );
     //let cam = Camera::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, -1.0), Vec3::new(0.0, 1.0, 0.0),
     //    parameters.field_of_view, aspect_ratio);
