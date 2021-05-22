@@ -2,9 +2,10 @@ use crate::datatypes::{Point3, Ray, Vec3};
 use crate::hittable::{Hit, Hittable};
 use rand::Rng;
 use std::cmp::Ordering;
+use std::fmt;
 
 // Axis-Aligned Bounding Box
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct AABB {
     pub minimum: Point3,
     pub maximum: Point3,
@@ -58,6 +59,29 @@ impl AABB {
     }
 }
 
+impl fmt::Display for AABB {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{}:{}", self.minimum, self.maximum)
+    }
+}
+
+pub struct SceneBuilder<'a> {
+    pub contents: Vec<Option<Box<dyn Hittable + 'a>>>,
+}
+
+impl<'a> SceneBuilder<'a> {
+    pub fn new() -> SceneBuilder<'a> {
+        SceneBuilder { contents: Vec::new() }
+    }
+    pub fn add<T: Hittable + 'a>(&mut self, v: T) {
+        self.contents.push(Some(Box::new(v)))
+    }
+
+    pub fn push<T: Hittable + 'a>(&mut self, v: Box<T>) {
+        self.contents.push(Some(v));
+    }
+}
+
 // Bounded Volume Hierarchy
 pub struct BHV<'a> {
     left: Option<Box<dyn Hittable + 'a>>,
@@ -65,18 +89,35 @@ pub struct BHV<'a> {
     bounds: AABB,
 }
 
-impl<'c> BHV<'c> {
-    pub fn new<'a, 'b>(objects: &'a mut Vec<Box<dyn Hittable + 'b>>) -> BHV<'b> {
-        let mut temp: Vec<Option<Box<dyn Hittable + 'b>>> = Vec::with_capacity(objects.len());
-        for o in objects.drain(0..) {
-            temp.push(Some(o))
-        }
-        BHV::new_inner(temp.as_mut_slice())
+fn surround<'a, 'b>(
+    a: &'a Option<Box<dyn Hittable + 'b>>,
+    b: &'a Option<Box<dyn Hittable + 'b>>,
+) -> AABB {
+    match (a.as_ref(), b.as_ref()) {
+        (Some(a), None) | (None, Some(a)) => a.bounding_box().unwrap(),
+        (Some(a), Some(b)) => a.bounding_box().unwrap().surround(&b.bounding_box().unwrap()),
+        (None, None) => panic!(),
     }
-    fn new_inner<'a, 'b>(objects: &'b mut [Option<Box<dyn Hittable + 'a>>]) -> BHV<'a> {
+}
+
+impl<'c> BHV<'c> {
+    pub fn new<'a>(objects: &'a mut SceneBuilder<'c>) -> BHV<'c> {
+        let result = BHV::new_inner(objects.contents.as_mut_slice());
+        objects.contents.clear();
+        result
+    }
+    pub fn new_inner<'a>(objects: &'a mut [Option<Box<dyn Hittable + 'c>>]) -> BHV<'c> {
         let axis = rand::thread_rng().gen_range(0..3);
+        let get_dim = |a: &Option<Box<dyn Hittable + 'a>>| {
+            a.as_ref().unwrap().bounding_box().unwrap().min().e[axis]
+        };
         let comparator =
-            |a: &Option<Box<dyn Hittable>>, b: &Option<Box<dyn Hittable>>| Ordering::Less;
+            |a: &Option<Box<dyn Hittable>>, b: &Option<Box<dyn Hittable>>| match get_dim(a)
+                .partial_cmp(&get_dim(b))
+            {
+                Some(ordering) => ordering,
+                None => panic!("a = {} b = {}", get_dim(a), get_dim(b)),
+            };
 
         let left;
         let right;
@@ -95,8 +136,8 @@ impl<'c> BHV<'c> {
                     right = Some(objects[0].take().unwrap());
                 }
                 Ordering::Equal => {
-                    left = Some(objects[0].take().unwrap());
-                    right = None;
+                    left = Some(objects[1].take().unwrap());
+                    right = Some(objects[0].take().unwrap());
                 }
             },
             _ => {
@@ -107,11 +148,8 @@ impl<'c> BHV<'c> {
                 right = Some(Box::new(BHV::new_inner(right_objects)));
             }
         }
-        return BHV {
-            left,
-            right,
-            bounds: AABB::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, 0.0)),
-        };
+        let bounds = surround(&left, &right);
+        BHV { left, right, bounds }
     }
 }
 
@@ -133,14 +171,38 @@ impl<'b> Hittable for BHV<'b> {
             return None;
         }
 
-        match hit(&self.left, r, tmin, tmax) {
-            Some(left) => Some(left),
-            None => hit(&self.right, r, tmin, tmax),
+        let hit_left = hit(&self.left, r, tmin, tmax);
+        let tmax_for_right = match hit_left.as_ref() {
+            Some(h) => h.t,
+            None => tmax,
+        };
+        let hit_right = hit(&self.right, r, tmin, tmax_for_right);
+        match hit_right {
+            Some(_) => hit_right,
+            None => hit_left,
         }
     }
 
     fn bounding_box(&self) -> Option<AABB> {
         Some(self.bounds)
+    }
+
+    fn print(&self, indent: usize) {
+        eprintln!(
+            "{:indent$} BHV {}:{} ",
+            "",
+            self.bounds.min(),
+            self.bounds.max(),
+            indent = indent
+        );
+        match self.left.as_ref() {
+            Some(left) => left.print(indent + 2),
+            None => (),
+        }
+        match self.right.as_ref() {
+            Some(right) => right.print(indent + 2),
+            None => (),
+        }
     }
 }
 

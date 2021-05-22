@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::fmt;
 use std::io::Write;
 use std::ops;
 
@@ -88,6 +89,12 @@ impl Vec3 {
     }
     pub fn b(&self) -> f64 {
         self.e[2]
+    }
+}
+
+impl fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({},{},{})", self.e[0], self.e[1], self.e[2])
     }
 }
 

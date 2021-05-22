@@ -29,6 +29,7 @@ impl<'a> Hit<'a> {
 
 pub trait Hittable {
     fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'a>>;
+    fn print(&self, indent: usize);
     fn bounding_box(&self) -> Option<AABB>;
 }
 
@@ -79,6 +80,17 @@ impl<T: Material> Hittable for Sphere<T> {
         let rad_v = Vec3::new(self.radius, self.radius, self.radius);
         Some(AABB::new(self.center - rad_v, self.center + rad_v))
     }
+
+    fn print(&self, indent: usize) {
+        eprintln!(
+            "{:indent$}Sphere bb={bb} center={center} radius={radius}",
+            "",
+            center = self.center,
+            radius = self.radius,
+            bb = self.bounding_box().unwrap(),
+            indent = indent
+        );
+    }
 }
 
 pub struct HittableList<'a> {
@@ -89,8 +101,11 @@ impl<'a> HittableList<'a> {
     pub fn new() -> HittableList<'a> {
         HittableList { contents: Vec::new() }
     }
-    pub fn push<T: Hittable + 'a>(&mut self, v: T) {
+    pub fn add<T: Hittable + 'a>(&mut self, v: T) {
         self.contents.push(Box::new(v));
+    }
+    pub fn push<T: Hittable + 'a>(&mut self, v: Box<T>) {
+        self.contents.push(v);
     }
 }
 
@@ -130,5 +145,9 @@ impl<'a> Hittable for HittableList<'a> {
             }
         }
         result
+    }
+
+    fn print(&self, indent: usize) {
+        panic!()
     }
 }

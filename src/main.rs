@@ -111,28 +111,29 @@ fn args() -> Parameters {
     }
 }
 
-fn simple_world<'a>() -> HittableList<'a> {
+fn simple_world<'a>() -> Box<dyn Hittable + 'a> {
     let mat_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let mat_center = Lambertian::new(Color::new(0.1, 0.3, 0.5));
     let mat_left = Dielectric::new(1.5);
     let mat_right = Metal::new(Color::new(0.8, 0.6, 0.2), 0.0);
 
-    let mut world = HittableList::new();
+    let mut world = bhv::SceneBuilder::new();
 
-    world.push(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground));
-    world.push(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center));
-    world.push(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
-    world.push(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left));
-    world.push(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right));
+    world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground));
+    world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center));
+    world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
+    world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left));
+    world.add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right));
 
-    world
+    let bhv = bhv::BHV::new(&mut world);
+    Box::new(bhv)
 }
 
-fn random_world<'a>() -> HittableList<'a> {
-    let mut world = HittableList::new();
+fn random_world<'a>() -> Box<dyn Hittable + 'a> {
+    let mut world = bhv::SceneBuilder::new();
 
     let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
-    world.push(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
+    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
 
     fn rnd() -> f64 {
         rand::thread_rng().gen_range(0.0..1.0)
@@ -146,39 +147,41 @@ fn random_world<'a>() -> HittableList<'a> {
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     let albedo = Color::random_unit() * Color::random_unit();
-                    world.push(Sphere::new(center, 0.2, Lambertian::new(albedo)));
+                    world.add(Sphere::new(center, 0.2, Lambertian::new(albedo)));
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0..0.5);
-                    world.push(Sphere::new(center, 0.2, Metal::new(albedo, fuzz)));
+                    world.add(Sphere::new(center, 0.2, Metal::new(albedo, fuzz)));
                 } else {
-                    world.push(Sphere::new(center, 0.2, Dielectric::new(1.5)));
+                    world.add(Sphere::new(center, 0.2, Dielectric::new(1.5)));
                 }
             }
         }
     }
 
-    world.push(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)));
-    world.push(Sphere::new(
+    world.add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)));
+    world.add(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
         Lambertian::new(Color::new(0.4, 0.2, 0.1)),
     ));
-    world.push(Sphere::new(
+    world.add(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
         Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
     ));
 
-    world
+    Box::new(bhv::BHV::new(&mut world));
 }
 
 fn main() {
+    let mut rng = rand::thread_rng();
     // Image
     let parameters = args();
 
     // World
-    let world = if parameters.random_world { random_world() } else { simple_world() };
+    let world: Box<dyn Hittable> =
+        if parameters.random_world { random_world() } else { simple_world() };
 
     // Camera
     let cam = Camera::new(
@@ -194,8 +197,6 @@ fn main() {
     //    parameters.field_of_view, aspect_ratio);
 
     // Render
-    let mut rng = rand::thread_rng();
-
     println!("P3\n{} {}\n255", parameters.image_width, parameters.image_height);
     for j in (0..parameters.image_height).rev() {
         eprint!("\rScanlines remaining: {}    ", j);
@@ -209,7 +210,7 @@ fn main() {
                 let v =
                     ((j as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_height as f64 - 1.0);
                 let r = cam.get_ray(u, v);
-                pixel_color = pixel_color + ray_color(&r, &world, parameters.max_depth);
+                pixel_color = pixel_color + ray_color(&r, world.as_ref(), parameters.max_depth);
             }
             write_color(&pixel_color, parameters.samples_per_pixel, &mut std::io::stdout());
         }
