@@ -101,10 +101,8 @@ impl<'c> BHV<'c> {
             },
             _ => {
                 objects.sort_by(comparator);
-                let (left_objects, right_objects): (
-                    &'b mut [Option<Box<dyn Hittable + 'a>>],
-                    &'b mut [Option<Box<dyn Hittable + 'a>>],
-                ) = objects.split_at_mut(objects.len() / 2);
+                let (left_objects, right_objects) = objects.split_at_mut(objects.len() / 2);
+
                 left = Some(Box::new(BHV::new_inner(left_objects)));
                 right = Some(Box::new(BHV::new_inner(right_objects)));
             }
