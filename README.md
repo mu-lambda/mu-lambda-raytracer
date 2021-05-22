@@ -1,6 +1,6 @@
 # RayTracer
 
-Implementation of a ray tracer in Rust, following https://raytracing.github.io/books/RayTracingInOneWeekend.html.
+Implementation of a ray tracer in Rust, following [_Ray Tracing in One Weekend_](https://raytracing.github.io/books/RayTracingInOneWeekend.html).
 
 Sample rendering:
 
