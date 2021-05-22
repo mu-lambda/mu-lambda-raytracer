@@ -89,10 +89,7 @@ pub struct BHV<'a> {
     bounds: AABB,
 }
 
-fn surround<'a, 'b>(
-    a: &'a Option<Box<dyn Hittable + 'b>>,
-    b: &'a Option<Box<dyn Hittable + 'b>>,
-) -> AABB {
+fn surround<'b>(a: &Option<Box<dyn Hittable + 'b>>, b: &Option<Box<dyn Hittable + 'b>>) -> AABB {
     match (a.as_ref(), b.as_ref()) {
         (Some(a), None) | (None, Some(a)) => a.bounding_box().unwrap(),
         (Some(a), Some(b)) => a.bounding_box().unwrap().surround(&b.bounding_box().unwrap()),

@@ -171,7 +171,7 @@ fn random_world<'a>() -> Box<dyn Hittable + 'a> {
         Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
     ));
 
-    Box::new(bhv::BHV::new(&mut world));
+    Box::new(bhv::BHV::new(&mut world))
 }
 
 fn main() {
