@@ -1,10 +1,11 @@
+use crate::bhv::AABB;
 use crate::datatypes::{dot, Point3, Ray, Vec3};
 use crate::materials::Material;
 use std::option::Option;
 use std::vec::Vec;
 
 #[derive(Clone)]
-pub struct HitRecord<'a> {
+pub struct Hit<'a> {
     pub p: Point3,
     pub normal: Vec3,
     pub t: f64,
@@ -12,22 +13,23 @@ pub struct HitRecord<'a> {
     pub material: &'a dyn Material,
 }
 
-impl<'a> HitRecord<'a> {
+impl<'a> Hit<'a> {
     fn new_with_face_normal(
         p: &Point3,
         t: f64,
         outward_normal: &Vec3,
         r: &Ray,
         material: &'a dyn Material,
-    ) -> HitRecord<'a> {
+    ) -> Hit<'a> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face { *outward_normal } else { -outward_normal };
-        return HitRecord { p: *p, normal, t, front_face, material };
+        return Hit { p: *p, normal, t, front_face, material };
     }
 }
 
 pub trait Hittable {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'a>>;
+    fn bounding_box(&self) -> Option<AABB>;
 }
 
 pub struct Sphere<T: Material> {
@@ -49,7 +51,7 @@ impl<T: Material> Sphere<T> {
 }
 
 impl<T: Material> Hittable for Sphere<T> {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let oc = &r.orig - &self.center;
         let a = r.dir.length_squared();
         let half_b = dot(oc, r.dir);
@@ -70,7 +72,12 @@ impl<T: Material> Hittable for Sphere<T> {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(HitRecord::new_with_face_normal(&p, t, &normal, r, &self.material));
+        return Some(Hit::new_with_face_normal(&p, t, &normal, r, &self.material));
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        let rad_v = Vec3::new(self.radius, self.radius, self.radius);
+        Some(AABB::new(self.center - rad_v, self.center + rad_v))
     }
 }
 
@@ -87,9 +94,9 @@ impl<'a> HittableList<'a> {
     }
 }
 
-impl Hittable for HittableList<'_> {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut result: Option<HitRecord> = None;
+impl<'a> Hittable for HittableList<'a> {
+    fn hit<'b>(&'b self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'b>> {
+        let mut result: Option<Hit> = None;
         let mut closest_so_far = t_max;
 
         for o in self.contents.iter() {
@@ -102,5 +109,26 @@ impl Hittable for HittableList<'_> {
             }
         }
         return result;
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        let mut result = None;
+
+        for o in self.contents.iter() {
+            match o.bounding_box() {
+                None => {
+                    return None;
+                }
+                Some(b) => {
+                    match result {
+                        None => {
+                            result = Some(b);
+                        }
+                        Some(box1) => result = Some(box1.surround(&b)),
+                    };
+                }
+            }
+        }
+        result
     }
 }

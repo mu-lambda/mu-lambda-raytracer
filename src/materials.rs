@@ -3,7 +3,7 @@ use crate::hittable;
 use rand::Rng;
 
 pub trait Material {
-    fn scatter(&self, ray: &Ray, h: &hittable::HitRecord) -> Option<(Color, Ray)>;
+    fn scatter(&self, ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)>;
 }
 
 #[derive(Clone)]
@@ -18,7 +18,7 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, h: &hittable::HitRecord) -> Option<(Color, Ray)> {
+    fn scatter(&self, _ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)> {
         let mut scatter_direction = h.normal + Vec3::random_in_hemisphere(&h.normal);
         if scatter_direction.near_zero() {
             scatter_direction = h.normal;
@@ -43,7 +43,7 @@ fn reflect(v: Vec3, n: Vec3) -> Vec3 {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, h: &hittable::HitRecord) -> Option<(Color, Ray)> {
+    fn scatter(&self, ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)> {
         let reflected = reflect(unit_vector(&ray.dir), h.normal);
         let scattered = Ray::new(h.p, reflected + self.fuzz * Vec3::random_in_unit_sphere());
         if dot(scattered.dir, h.normal) > 0.0 {
@@ -80,7 +80,7 @@ fn reflectance(cos_theta: f64, refraction_ratio: f64) -> f64 {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, h: &hittable::HitRecord) -> Option<(Color, Ray)> {
+    fn scatter(&self, ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)> {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio =
             if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
