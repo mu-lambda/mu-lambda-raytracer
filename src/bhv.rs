@@ -114,27 +114,30 @@ impl<'a> Node<'a> {
     }
 
     fn new<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> Node<'a> {
-        if shapes.len() == 1 {
-            return Node::Leaf(shapes[0].take().unwrap());
+        match shapes {
+            [v] => Node::Leaf(v.take().unwrap()),
+            _ => {
+                let axis = rand::thread_rng().gen_range(0..3);
+                let get_dim =
+                    |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().min().e[axis];
+                let comparator =
+                    |a: &Option<Box<dyn Bounded>>, b: &Option<Box<dyn Bounded>>| match get_dim(a)
+                        .partial_cmp(&get_dim(b))
+                    {
+                        Some(ordering) => ordering,
+                        None => Ordering::Equal,
+                    };
+
+                shapes.sort_by(comparator);
+                let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
+
+                let left = Box::new(Node::new(left_shapes));
+                let right = Box::new(Node::new(right_shapes));
+                let bounds = left.bounding_box().surround(&right.bounding_box());
+                Node::Inner { left, right, bounds }
+
+            }
         }
-        let axis = rand::thread_rng().gen_range(0..3);
-        let get_dim =
-            |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().min().e[axis];
-        let comparator =
-            |a: &Option<Box<dyn Bounded>>, b: &Option<Box<dyn Bounded>>| match get_dim(a)
-                .partial_cmp(&get_dim(b))
-            {
-                Some(ordering) => ordering,
-                None => Ordering::Equal,
-            };
-
-        shapes.sort_by(comparator);
-        let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
-
-        let left = Box::new(Node::new(left_shapes));
-        let right = Box::new(Node::new(right_shapes));
-        let bounds = left.bounding_box().surround(&right.bounding_box());
-        Node::Inner { left, right, bounds }
     }
 
     fn hit<'b>(&'b self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'b>> {
