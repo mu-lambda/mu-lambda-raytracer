@@ -104,9 +104,9 @@ fn surround<'a>(a: &Option<Box<dyn Bounded + 'a>>, b: &Option<Box<dyn Bounded + 
 }
 
 impl<'a> BHV<'a> {
-    pub fn new<'b>(objects: &'b mut SceneBuilder<'a>) -> BHV<'a> {
-        let result = BHV::new_inner(objects.contents.as_mut_slice());
-        objects.contents.clear();
+    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
+        let result = BHV::new_inner(scene.contents.as_mut_slice());
+        scene.contents.clear();
         result
     }
     pub fn new_inner<'b>(objects: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> BHV<'a> {
@@ -155,30 +155,18 @@ impl<'a> BHV<'a> {
     }
 }
 
-fn hit<'a>(
-    bhv_o: &'a Option<Box<dyn Bounded + 'a>>,
-    r: &Ray,
-    tmin: f64,
-    tmax: f64,
-) -> Option<Hit<'a>> {
-    match bhv_o {
-        None => None,
-        Some(bhv) => bhv.hit(r, tmin, tmax),
-    }
-}
-
 impl<'b> Hittable for BHV<'b> {
     fn hit<'a>(&'a self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'a>> {
         if !self.bounds.hit(r, tmin, tmax) {
             return None;
         }
 
-        let hit_left = hit(&self.left, r, tmin, tmax);
+        let hit_left = self.left.as_ref().map_or(None, |v| v.hit(r, tmin, tmax));
         let tmax_for_right = match hit_left.as_ref() {
             Some(h) => h.t,
             None => tmax,
         };
-        let hit_right = hit(&self.right, r, tmin, tmax_for_right);
+        let hit_right = self.right.as_ref().map_or(None, |v| v.hit(r, tmin, tmax_for_right));
         match hit_right {
             Some(_) => hit_right,
             None => hit_left,
