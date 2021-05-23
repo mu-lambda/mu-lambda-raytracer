@@ -111,22 +111,22 @@ impl<'b> Bounded for BHV<'b> {
 }
 
 enum Node<'a> {
-    Leaf(Box<dyn Bounded + 'a>),
+    Leaf { shape: Box<dyn Bounded + 'a> },
     Inner { bounds: AABB, left: Box<Node<'a>>, right: Box<Node<'a>> },
 }
 
 impl<'a> Node<'a> {
     fn bounding_box(&self) -> AABB {
         match self {
-            Node::Leaf(v) => v.bounding_box(),
+            Node::Leaf { shape } => shape.bounding_box(),
             Node::Inner { bounds, left: _, right: _ } => *bounds,
         }
     }
 
     fn new<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> Node<'a> {
         match shapes {
-            [] => Node::Leaf(Box::new(shapes::Empty::INSTANCE)),
-            [v] => Node::Leaf(v.take().unwrap()),
+            [] => Node::Leaf { shape: Box::new(shapes::Empty::INSTANCE) },
+            [v] => Node::Leaf { shape: v.take().unwrap() },
             _ => {
                 let axis = rand::thread_rng().gen_range(0..3);
                 let get_dim = |a: &Option<Box<dyn Bounded + 'a>>| {
@@ -153,7 +153,7 @@ impl<'a> Node<'a> {
 
     fn hit<'b>(&'b self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'b>> {
         match self {
-            Node::Leaf(v) => v.hit(r, tmin, tmax),
+            Node::Leaf { shape } => shape.hit(r, tmin, tmax),
             Node::Inner { left, right, bounds } => {
                 if !bounds.hit(r, tmin, tmax) {
                     return None;
