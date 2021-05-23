@@ -1,4 +1,4 @@
-use crate::bhv::AABB;
+use crate::bhv::{Bounded, AABB};
 use crate::datatypes::{dot, Point3, Ray, Vec3};
 use crate::hittable::{Hit, Hittable};
 use crate::materials::Material;
@@ -43,11 +43,13 @@ impl<T: Material> Hittable for Sphere<T> {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        return Some(Hit::new_with_face_normal(&p, t, &normal, r, &self.material));
+        Some(Hit::new_with_face_normal(&p, t, &normal, r, &self.material))
     }
+}
 
-    fn bounding_box(&self) -> Option<AABB> {
+impl<T: Material> Bounded for Sphere<T> {
+    fn bounding_box(&self) -> AABB {
         let rad_v = Vec3::new(self.radius, self.radius, self.radius);
-        Some(AABB::new(self.center - rad_v, self.center + rad_v))
+        AABB::new(self.center - rad_v, self.center + rad_v)
     }
 }

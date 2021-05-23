@@ -65,34 +65,38 @@ impl fmt::Display for AABB {
     }
 }
 
+pub trait Bounded: Hittable {
+    fn bounding_box(&self) -> AABB;
+}
+
 pub struct SceneBuilder<'a> {
-    pub contents: Vec<Option<Box<dyn Hittable + 'a>>>,
+    pub contents: Vec<Option<Box<dyn Bounded + 'a>>>,
 }
 
 impl<'a> SceneBuilder<'a> {
     pub fn new() -> SceneBuilder<'a> {
         SceneBuilder { contents: Vec::new() }
     }
-    pub fn add<T: Hittable + 'a>(&mut self, v: T) {
+    pub fn add<T: Bounded + 'a>(&mut self, v: T) {
         self.contents.push(Some(Box::new(v)))
     }
 
-    pub fn push<T: Hittable + 'a>(&mut self, v: Box<T>) {
+    pub fn push<T: Bounded + 'a>(&mut self, v: Box<T>) {
         self.contents.push(Some(v));
     }
 }
 
 // Bounded Volume Hierarchy
 pub struct BHV<'a> {
-    left: Option<Box<dyn Hittable + 'a>>,
-    right: Option<Box<dyn Hittable + 'a>>,
+    left: Option<Box<dyn Bounded + 'a>>,
+    right: Option<Box<dyn Bounded + 'a>>,
     bounds: AABB,
 }
 
-fn surround<'b>(a: &Option<Box<dyn Hittable + 'b>>, b: &Option<Box<dyn Hittable + 'b>>) -> AABB {
+fn surround<'b>(a: &Option<Box<dyn Bounded + 'b>>, b: &Option<Box<dyn Bounded + 'b>>) -> AABB {
     match (a.as_ref(), b.as_ref()) {
-        (Some(a), None) | (None, Some(a)) => a.bounding_box().unwrap(),
-        (Some(a), Some(b)) => a.bounding_box().unwrap().surround(&b.bounding_box().unwrap()),
+        (Some(a), None) | (None, Some(a)) => a.bounding_box(),
+        (Some(a), Some(b)) => a.bounding_box().surround(&b.bounding_box()),
         (None, None) => panic!(),
     }
 }
@@ -103,13 +107,12 @@ impl<'c> BHV<'c> {
         objects.contents.clear();
         result
     }
-    pub fn new_inner<'a>(objects: &'a mut [Option<Box<dyn Hittable + 'c>>]) -> BHV<'c> {
+    pub fn new_inner<'a>(objects: &'a mut [Option<Box<dyn Bounded + 'c>>]) -> BHV<'c> {
         let axis = rand::thread_rng().gen_range(0..3);
-        let get_dim = |a: &Option<Box<dyn Hittable + 'a>>| {
-            a.as_ref().unwrap().bounding_box().unwrap().min().e[axis]
-        };
+        let get_dim =
+            |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().min().e[axis];
         let comparator =
-            |a: &Option<Box<dyn Hittable>>, b: &Option<Box<dyn Hittable>>| match get_dim(a)
+            |a: &Option<Box<dyn Bounded>>, b: &Option<Box<dyn Bounded>>| match get_dim(a)
                 .partial_cmp(&get_dim(b))
             {
                 Some(ordering) => ordering,
@@ -151,7 +154,7 @@ impl<'c> BHV<'c> {
 }
 
 fn hit<'a>(
-    bhv_o: &'a Option<Box<dyn Hittable + 'a>>,
+    bhv_o: &'a Option<Box<dyn Bounded + 'a>>,
     r: &Ray,
     tmin: f64,
     tmax: f64,
@@ -179,9 +182,11 @@ impl<'b> Hittable for BHV<'b> {
             None => hit_left,
         }
     }
+}
 
-    fn bounding_box(&self) -> Option<AABB> {
-        Some(self.bounds)
+impl<'b> Bounded for BHV<'b> {
+    fn bounding_box(&self) -> AABB {
+        self.bounds
     }
 }
 

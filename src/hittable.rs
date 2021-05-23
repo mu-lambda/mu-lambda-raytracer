@@ -29,7 +29,6 @@ impl<'a> Hit<'a> {
 
 pub trait Hittable {
     fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'a>>;
-    fn bounding_box(&self) -> Option<AABB>;
 }
 
 pub struct HittableList<'a> {
@@ -63,26 +62,5 @@ impl<'a> Hittable for HittableList<'a> {
             }
         }
         return result;
-    }
-
-    fn bounding_box(&self) -> Option<AABB> {
-        let mut result = None;
-
-        for o in self.contents.iter() {
-            match o.bounding_box() {
-                None => {
-                    return None;
-                }
-                Some(b) => {
-                    match result {
-                        None => {
-                            result = Some(b);
-                        }
-                        Some(box1) => result = Some(box1.surround(&b)),
-                    };
-                }
-            }
-        }
-        result
     }
 }
