@@ -89,6 +89,17 @@ pub struct BHV<'a> {
     root: Node<'a>,
 }
 
+impl<'a> BHV<'a> {
+    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
+        if scene.contents.is_empty() {
+            panic!();
+        }
+        let root = Node::new(scene.contents.as_mut_slice());
+        scene.contents.clear();
+        BHV { root }
+    }
+}
+
 enum Node<'a> {
     Leaf(Box<dyn Bounded + 'a>),
     Inner { bounds: AABB, left: Box<Node<'a>>, right: Box<Node<'a>> },
@@ -114,7 +125,7 @@ impl<'a> Node<'a> {
                 .partial_cmp(&get_dim(b))
             {
                 Some(ordering) => ordering,
-                None => panic!("a = {} b = {}", get_dim(a), get_dim(b)),
+                None => Ordering::Equal,
             };
 
         shapes.sort_by(comparator);
@@ -145,17 +156,6 @@ impl<'a> Node<'a> {
                 }
             }
         }
-    }
-}
-
-impl<'a> BHV<'a> {
-    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
-        if scene.contents.is_empty() {
-            panic!();
-        }
-        let root = Node::new(scene.contents.as_mut_slice());
-        scene.contents.clear();
-        BHV { root }
     }
 }
 
