@@ -109,7 +109,7 @@ impl<'a> BHV<'a> {
         scene.contents.clear();
         result
     }
-    pub fn new_inner<'b>(objects: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> BHV<'a> {
+    pub fn new_inner<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> BHV<'a> {
         let axis = rand::thread_rng().gen_range(0..3);
         let get_dim =
             |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().min().e[axis];
@@ -123,32 +123,32 @@ impl<'a> BHV<'a> {
 
         let left;
         let right;
-        match objects.len() {
+        match shapes.len() {
             1 => {
-                left = Some(objects[0].take().unwrap());
+                left = Some(shapes[0].take().unwrap());
                 right = None;
             }
-            // Optimize representation: two objects become leaf nodes.
-            2 => match comparator(&objects[0], &objects[1]) {
+            // Optimize representation: two shapes become leaf nodes.
+            2 => match comparator(&shapes[0], &shapes[1]) {
                 Ordering::Less => {
-                    left = Some(objects[0].take().unwrap());
-                    right = Some(objects[1].take().unwrap());
+                    left = Some(shapes[0].take().unwrap());
+                    right = Some(shapes[1].take().unwrap());
                 }
                 Ordering::Greater => {
-                    left = Some(objects[1].take().unwrap());
-                    right = Some(objects[0].take().unwrap());
+                    left = Some(shapes[1].take().unwrap());
+                    right = Some(shapes[0].take().unwrap());
                 }
                 Ordering::Equal => {
-                    left = Some(objects[1].take().unwrap());
-                    right = Some(objects[0].take().unwrap());
+                    left = Some(shapes[1].take().unwrap());
+                    right = Some(shapes[0].take().unwrap());
                 }
             },
             _ => {
-                objects.sort_by(comparator);
-                let (left_objects, right_objects) = objects.split_at_mut(objects.len() / 2);
+                shapes.sort_by(comparator);
+                let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
 
-                left = Some(Box::new(BHV::new_inner(left_objects)));
-                right = Some(Box::new(BHV::new_inner(right_objects)));
+                left = Some(Box::new(BHV::new_inner(left_shapes)));
+                right = Some(Box::new(BHV::new_inner(right_shapes)));
             }
         }
         let bounds = surround(&left, &right);
