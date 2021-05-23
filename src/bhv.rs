@@ -12,8 +12,10 @@ pub struct AABB {
 }
 
 impl AABB {
-    pub fn new(minimum: Point3, maximum: Point3) -> AABB {
-        AABB { minimum, maximum }
+    pub fn new(a: Point3, b: Point3) -> AABB {
+        let min = [a.e[0].min(b.e[0]), a.e[1].min(b.e[1]), a.e[2].min(b.e[2])];
+        let max = [a.e[0].max(b.e[0]), a.e[1].max(b.e[1]), a.e[2].max(b.e[2])];
+        AABB { minimum: Point3 { e: min }, maximum: Point3 { e: max } }
     }
 
     pub fn min(&self) -> Point3 {
@@ -46,14 +48,8 @@ impl AABB {
         let mut min: [f64; 3] = [0.0, 0.0, 0.0];
         let mut max: [f64; 3] = [0.0, 0.0, 0.0];
         for a in 0..3 {
-            min[a] = self.minimum.e[a]
-                .min(other.minimum.e[a])
-                .min(self.maximum.e[a])
-                .min(other.maximum.e[a]);
-            max[a] = self.minimum.e[a]
-                .max(other.minimum.e[a])
-                .max(self.maximum.e[a])
-                .max(other.maximum.e[a]);
+            min[a] = self.minimum.e[a].min(other.minimum.e[a]);
+            max[a] = self.maximum.e[a].max(other.maximum.e[a]);
         }
         AABB::new(Point3 { e: min }, Point3 { e: max })
     }
@@ -95,14 +91,6 @@ pub struct BHV<'a> {
     bounds: AABB,
 }
 
-fn surround<'a>(a: &Option<Box<dyn Bounded + 'a>>, b: &Option<Box<dyn Bounded + 'a>>) -> AABB {
-    match (a.as_ref(), b.as_ref()) {
-        (Some(a), None) | (None, Some(a)) => a.bounding_box(),
-        (Some(a), Some(b)) => a.bounding_box().surround(&b.bounding_box()),
-        (None, None) => panic!(),
-    }
-}
-
 impl<'a> BHV<'a> {
     pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
         let result = BHV::new_inner(scene.contents.as_mut_slice());
@@ -123,35 +111,43 @@ impl<'a> BHV<'a> {
 
         let left;
         let right;
+        let bounds;
         match shapes.len() {
             1 => {
-                left = Some(shapes[0].take().unwrap());
+                let v = shapes[0].take().unwrap();
+                bounds = v.bounding_box();
+                left = Some(v);
                 right = None;
             }
             // Optimize representation: two shapes become leaf nodes.
-            2 => match comparator(&shapes[0], &shapes[1]) {
-                Ordering::Less => {
-                    left = Some(shapes[0].take().unwrap());
-                    right = Some(shapes[1].take().unwrap());
+            2 => {
+                let v_left;
+                let v_right;
+                match comparator(&shapes[0], &shapes[1]) {
+                    Ordering::Less | Ordering::Equal => {
+                        v_left = shapes[0].take().unwrap();
+                        v_right = shapes[1].take().unwrap();
+                    }
+                    Ordering::Greater => {
+                        v_left = shapes[1].take().unwrap();
+                        v_right = shapes[0].take().unwrap();
+                    }
                 }
-                Ordering::Greater => {
-                    left = Some(shapes[1].take().unwrap());
-                    right = Some(shapes[0].take().unwrap());
-                }
-                Ordering::Equal => {
-                    left = Some(shapes[1].take().unwrap());
-                    right = Some(shapes[0].take().unwrap());
-                }
-            },
+                bounds = v_left.bounding_box().surround(&v_right.bounding_box());
+                left = Some(v_left);
+                right = Some(v_right);
+            }
             _ => {
                 shapes.sort_by(comparator);
                 let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
 
-                left = Some(Box::new(BHV::new_inner(left_shapes)));
-                right = Some(Box::new(BHV::new_inner(right_shapes)));
+                let v_left = Box::new(BHV::new_inner(left_shapes));
+                let v_right = Box::new(BHV::new_inner(right_shapes));
+                bounds = v_left.bounding_box().surround(&v_right.bounding_box());
+                left = Some(v_left);
+                right = Some(v_right);
             }
         }
-        let bounds = surround(&left, &right);
         BHV { left, right, bounds }
     }
 }
