@@ -7,7 +7,7 @@ mod vec;
 
 use camera::Camera;
 use clap::{App, Arg};
-use hittable::{Hittable, HittableList};
+use hittable::Hittable;
 use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
 use shapes::Sphere;
