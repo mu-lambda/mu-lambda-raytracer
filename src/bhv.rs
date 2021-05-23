@@ -100,6 +100,18 @@ impl<'a> BHV<'a> {
     }
 }
 
+impl<'b> Hittable for BHV<'b> {
+    fn hit<'a>(&'a self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'a>> {
+        self.root.hit(r, tmin, tmax)
+    }
+}
+
+impl<'b> Bounded for BHV<'b> {
+    fn bounding_box(&self) -> AABB {
+        self.root.bounding_box()
+    }
+}
+
 enum Node<'a> {
     Leaf(Box<dyn Bounded + 'a>),
     Inner { bounds: AABB, left: Box<Node<'a>>, right: Box<Node<'a>> },
@@ -154,18 +166,6 @@ impl<'a> Node<'a> {
                 }
             }
         }
-    }
-}
-
-impl<'b> Hittable for BHV<'b> {
-    fn hit<'a>(&'a self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'a>> {
-        self.root.hit(r, tmin, tmax)
-    }
-}
-
-impl<'b> Bounded for BHV<'b> {
-    fn bounding_box(&self) -> AABB {
-        self.root.bounding_box()
     }
 }
 
