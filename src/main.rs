@@ -3,13 +3,15 @@ mod camera;
 mod datatypes;
 mod hittable;
 mod materials;
+mod shapes;
 
 use camera::Camera;
 use clap::{App, Arg};
 use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
-use hittable::{Hittable, HittableList, Sphere};
+use hittable::{Hittable, HittableList};
 use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
+use shapes::Sphere;
 use std::io::{self, Write};
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {

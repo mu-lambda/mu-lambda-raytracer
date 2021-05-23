@@ -183,24 +183,6 @@ impl<'b> Hittable for BHV<'b> {
     fn bounding_box(&self) -> Option<AABB> {
         Some(self.bounds)
     }
-
-    fn print(&self, indent: usize) {
-        eprintln!(
-            "{:indent$} BHV {}:{} ",
-            "",
-            self.bounds.min(),
-            self.bounds.max(),
-            indent = indent
-        );
-        match self.left.as_ref() {
-            Some(left) => left.print(indent + 2),
-            None => (),
-        }
-        match self.right.as_ref() {
-            Some(right) => right.print(indent + 2),
-            None => (),
-        }
-    }
 }
 
 #[cfg(test)]
