@@ -119,7 +119,7 @@ impl<'a> Node<'a> {
             _ => {
                 let axis = rand::thread_rng().gen_range(0..3);
                 let get_dim = |a: &Option<Box<dyn Bounded + 'a>>| {
-                    a.as_ref().unwrap().bounding_box().min().e[axis]
+                    a.as_ref().unwrap().bounding_box().minimum.e[axis]
                 };
                 let comparator =
                     |a: &Option<Box<dyn Bounded>>, b: &Option<Box<dyn Bounded>>| match get_dim(a)
