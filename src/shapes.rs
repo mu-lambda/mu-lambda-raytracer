@@ -3,6 +3,24 @@ use crate::hittable::{Hit, Hittable};
 use crate::materials::Material;
 use crate::vec::{dot, Point3, Ray, Vec3};
 
+pub struct Empty {}
+
+impl Empty {
+    pub const INSTANCE: Empty = Empty {};
+}
+
+impl Hittable for Empty {
+    fn hit(&self, _: &Ray, _: f64, _: f64) -> Option<Hit> {
+        None
+    }
+}
+
+impl Bounded for Empty {
+    fn bounding_box(&self) -> AABB {
+        AABB::new(Point3::ZERO, Point3::ZERO)
+    }
+}
+
 pub struct Sphere<T: Material> {
     center: Point3,
     radius: f64,

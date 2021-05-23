@@ -1,4 +1,5 @@
 use crate::hittable::{Hit, Hittable};
+use crate::shapes;
 use crate::vec::{Point3, Ray, Vec3};
 use rand::Rng;
 use std::cmp::Ordering;
@@ -91,9 +92,6 @@ pub struct BHV<'a> {
 
 impl<'a> BHV<'a> {
     pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
-        if scene.contents.is_empty() {
-            panic!();
-        }
         let root = Node::new(scene.contents.as_mut_slice());
         scene.contents.clear();
         BHV { root }
@@ -127,6 +125,7 @@ impl<'a> Node<'a> {
 
     fn new<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> Node<'a> {
         match shapes {
+            [] => Node::Leaf(Box::new(shapes::Empty::INSTANCE)),
             [v] => Node::Leaf(v.take().unwrap()),
             _ => {
                 let axis = rand::thread_rng().gen_range(0..3);
