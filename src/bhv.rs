@@ -1,5 +1,5 @@
-use crate::datatypes::{Point3, Ray, Vec3};
 use crate::hittable::{Hit, Hittable};
+use crate::vec::{Point3, Ray, Vec3};
 use rand::Rng;
 use std::cmp::Ordering;
 use std::fmt;

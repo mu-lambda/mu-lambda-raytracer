@@ -1,6 +1,6 @@
 use crate::bhv::AABB;
-use crate::datatypes::{dot, Point3, Ray, Vec3};
 use crate::materials::Material;
+use crate::vec::{dot, Point3, Ray, Vec3};
 use std::option::Option;
 use std::vec::Vec;
 

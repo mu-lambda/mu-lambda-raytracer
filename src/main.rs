@@ -1,18 +1,18 @@
 mod bhv;
 mod camera;
-mod datatypes;
 mod hittable;
 mod materials;
 mod shapes;
+mod vec;
 
 use camera::Camera;
 use clap::{App, Arg};
-use datatypes::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 use hittable::{Hittable, HittableList};
 use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
 use shapes::Sphere;
 use std::io::{self, Write};
+use vec::{unit_vector, write_color, Color, Point3, Ray, Vec3};
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {

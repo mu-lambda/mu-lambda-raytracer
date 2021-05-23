@@ -1,7 +1,7 @@
 use crate::bhv::{Bounded, AABB};
-use crate::datatypes::{dot, Point3, Ray, Vec3};
 use crate::hittable::{Hit, Hittable};
 use crate::materials::Material;
+use crate::vec::{dot, Point3, Ray, Vec3};
 
 pub struct Sphere<T: Material> {
     center: Point3,

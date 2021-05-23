@@ -1,4 +1,4 @@
-use crate::datatypes::{cross, unit_vector, Point3, Ray, Vec3};
+use crate::vec::{cross, unit_vector, Point3, Ray, Vec3};
 
 pub struct Camera {
     origin: Point3,

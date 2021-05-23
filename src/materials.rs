@@ -1,5 +1,5 @@
-use crate::datatypes::{dot, unit_vector, Color, Ray, Vec3};
 use crate::hittable;
+use crate::vec::{dot, unit_vector, Color, Ray, Vec3};
 use rand::Rng;
 
 pub trait Material {
