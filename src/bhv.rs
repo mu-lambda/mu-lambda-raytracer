@@ -145,14 +145,9 @@ impl<'a> Node<'a> {
                     return None;
                 }
                 let hit_left = left.hit(r, tmin, tmax);
-                let tmax_for_right = match hit_left.as_ref() {
-                    Some(h) => h.t,
-                    None => tmax,
-                };
-                let hit_right = right.hit(r, tmin, tmax_for_right);
-                match hit_right {
-                    Some(_) => hit_right,
+                match right.hit(r, tmin, hit_left.as_ref().map_or(tmax, |h| h.t)) {
                     None => hit_left,
+                    hit_right => hit_right,
                 }
             }
         }
