@@ -70,19 +70,21 @@ pub trait Bounded: Hittable {
 }
 
 pub struct SceneBuilder<'a> {
-    pub contents: Vec<Option<Box<dyn Bounded + 'a>>>,
+    contents: Vec<Option<Box<dyn Bounded + 'a>>>,
 }
 
 impl<'a> SceneBuilder<'a> {
     pub fn new() -> SceneBuilder<'a> {
         SceneBuilder { contents: Vec::new() }
     }
-    pub fn add<T: Bounded + 'a>(&mut self, v: T) {
-        self.contents.push(Some(Box::new(v)))
+    pub fn add<T: Bounded + 'a>(&mut self, v: T) -> &mut Self {
+        self.contents.push(Some(Box::new(v)));
+        self
     }
 
-    pub fn push<T: Bounded + 'a>(&mut self, v: Box<T>) {
+    pub fn push<T: Bounded + 'a>(&mut self, v: Box<T>) -> &mut Self {
         self.contents.push(Some(v));
+        self
     }
 }
 
@@ -93,7 +95,7 @@ pub struct BHV<'a> {
     bounds: AABB,
 }
 
-fn surround<'b>(a: &Option<Box<dyn Bounded + 'b>>, b: &Option<Box<dyn Bounded + 'b>>) -> AABB {
+fn surround<'a>(a: &Option<Box<dyn Bounded + 'a>>, b: &Option<Box<dyn Bounded + 'a>>) -> AABB {
     match (a.as_ref(), b.as_ref()) {
         (Some(a), None) | (None, Some(a)) => a.bounding_box(),
         (Some(a), Some(b)) => a.bounding_box().surround(&b.bounding_box()),
@@ -101,13 +103,13 @@ fn surround<'b>(a: &Option<Box<dyn Bounded + 'b>>, b: &Option<Box<dyn Bounded + 
     }
 }
 
-impl<'c> BHV<'c> {
-    pub fn new<'a>(objects: &'a mut SceneBuilder<'c>) -> BHV<'c> {
+impl<'a> BHV<'a> {
+    pub fn new<'b>(objects: &'b mut SceneBuilder<'a>) -> BHV<'a> {
         let result = BHV::new_inner(objects.contents.as_mut_slice());
         objects.contents.clear();
         result
     }
-    pub fn new_inner<'a>(objects: &'a mut [Option<Box<dyn Bounded + 'c>>]) -> BHV<'c> {
+    pub fn new_inner<'b>(objects: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> BHV<'a> {
         let axis = rand::thread_rng().gen_range(0..3);
         let get_dim =
             |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().min().e[axis];

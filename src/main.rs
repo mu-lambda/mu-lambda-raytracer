@@ -121,11 +121,12 @@ fn simple_world<'a>() -> Box<dyn Hittable + 'a> {
 
     let mut world = bhv::SceneBuilder::new();
 
-    world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground));
-    world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center));
-    world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
-    world.add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left));
-    world.add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right));
+    world
+        .add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground))
+        .add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center))
+        .add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()))
+        .add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left))
+        .add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right));
 
     let bhv = bhv::BHV::new(&mut world);
     Box::new(bhv)
@@ -161,17 +162,18 @@ fn random_world<'a>() -> Box<dyn Hittable + 'a> {
         }
     }
 
-    world.add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)));
-    world.add(Sphere::new(
-        Point3::new(-4.0, 1.0, 0.0),
-        1.0,
-        Lambertian::new(Color::new(0.4, 0.2, 0.1)),
-    ));
-    world.add(Sphere::new(
-        Point3::new(4.0, 1.0, 0.0),
-        1.0,
-        Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
-    ));
+    world
+        .add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)))
+        .add(Sphere::new(
+            Point3::new(-4.0, 1.0, 0.0),
+            1.0,
+            Lambertian::new(Color::new(0.4, 0.2, 0.1)),
+        ))
+        .add(Sphere::new(
+            Point3::new(4.0, 1.0, 0.0),
+            1.0,
+            Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
+        ));
 
     Box::new(bhv::BHV::new(&mut world))
 }
