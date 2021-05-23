@@ -2,6 +2,7 @@ mod bhv;
 mod camera;
 mod hittable;
 mod materials;
+mod raytrace;
 mod shapes;
 mod vec;
 
@@ -10,41 +11,16 @@ use clap::{App, Arg};
 use hittable::Hittable;
 use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
+use raytrace::RayTracer;
 use shapes::Sphere;
 use std::io::{self, Write};
-use vec::{unit_vector, write_color, Color, Point3, Ray, Vec3};
-
-fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
-    if depth <= 0 {
-        return Color::ZERO;
-    }
-    match world.hit(ray, 0.001, f64::INFINITY) {
-        Some(h) => match h.material.scatter(ray, &h) {
-            Some((attenuation, scattered)) => {
-                return attenuation * ray_color(&scattered, world, depth - 1);
-            }
-            None => {
-                return Color::ZERO;
-            }
-        },
-        None => {
-            let white: Color = Color::new(1.0f64, 1.0f64, 1.0f64);
-            let blueish: Color = Color::new(0.5f64, 0.7f64, 1.0f64);
-            let unit_direction = unit_vector(&ray.dir);
-            let t = 0.5f64 * (unit_direction.y() + 1.0f64);
-            return (1.0 - t) * white + t * blueish;
-        }
-    }
-}
+use vec::{unit_vector, Color, Point3, Ray, Vec3};
 
 struct Parameters {
     pub random_world: bool,
 
     pub aspect_ratio: f64,
-    pub image_width: i32,
-    pub image_height: i32,
-    pub samples_per_pixel: i32,
-    pub max_depth: i32,
+    pub render: raytrace::RenderingParams,
 
     pub lookfrom: Point3,
     pub lookat: Point3,
@@ -89,7 +65,7 @@ fn args() -> Parameters {
         .arg(Arg::with_name("random_world").long("random_world"))
         .get_matches();
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
-    let image_width = matches.value_of("image_width").unwrap().parse::<i32>().unwrap();
+    let image_width = matches.value_of("image_width").unwrap().parse::<usize>().unwrap();
     let lookfrom = parse_vector(matches.value_of("lookfrom").unwrap());
     let lookat = parse_vector(matches.value_of("lookat").unwrap());
     let focus_dist = match matches.value_of("focus_dist") {
@@ -100,10 +76,16 @@ fn args() -> Parameters {
     Parameters {
         random_world: matches.is_present("random_world"),
         aspect_ratio,
-        image_width,
-        image_height: (image_width as f64 / aspect_ratio) as i32,
-        samples_per_pixel: matches.value_of("samples_per_pixel").unwrap().parse::<i32>().unwrap(),
-        max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
+        render: raytrace::RenderingParams {
+            image_width,
+            image_height: (image_width as f64 / aspect_ratio) as usize,
+            samples_per_pixel: matches
+                .value_of("samples_per_pixel")
+                .unwrap()
+                .parse::<i32>()
+                .unwrap(),
+            max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
+        },
         lookfrom,
         lookat,
         up: parse_vector(matches.value_of("up").unwrap()),
@@ -201,22 +183,17 @@ fn main() {
     //    parameters.field_of_view, aspect_ratio);
 
     // Render
-    println!("P3\n{} {}\n255", parameters.image_width, parameters.image_height);
-    for j in (0..parameters.image_height).rev() {
+    println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
+    let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
+    let mut line = vec![(0, 0, 0); parameters.render.image_width];
+
+    for j in (0..parameters.render.image_height).rev() {
         eprint!("\rScanlines remaining: {}    ", j);
         io::stderr().flush().unwrap();
+        rt.render_line(j, line.as_mut_slice());
 
-        for i in 0..parameters.image_width {
-            let mut pixel_color = Color::ZERO;
-            for _ in 0..parameters.samples_per_pixel {
-                let u =
-                    ((i as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_width as f64 - 1.0);
-                let v =
-                    ((j as f64) + rng.gen_range(0.0..1.0)) / (parameters.image_height as f64 - 1.0);
-                let r = cam.get_ray(u, v);
-                pixel_color = pixel_color + ray_color(&r, world.as_ref(), parameters.max_depth);
-            }
-            write_color(&pixel_color, parameters.samples_per_pixel, &mut std::io::stdout());
+        for (r, g, b) in line.iter() {
+            println!("{} {} {}", r, g, b);
         }
     }
 }

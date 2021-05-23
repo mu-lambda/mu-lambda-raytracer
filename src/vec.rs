@@ -199,28 +199,6 @@ impl ops::Mul<Vec3> for f64 {
 pub type Point3 = Vec3;
 pub type Color = Vec3;
 
-pub type RGB = (i32, i32, i32);
-
-pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
-    let scale = 1.0f64 / samples_per_pixel as f64;
-    let r = (color.r() * scale).sqrt();
-    let g = (color.g() * scale).sqrt();
-    let b = (color.b() * scale).sqrt();
-    let ir = (255.999f64 * r.clamp(0.0, 0.99999999)) as i32;
-    let ig = (255.999f64 * g.clamp(0.0, 0.99999999)) as i32;
-    let ib = (255.999f64 * b.clamp(0.0, 0.99999999)) as i32;
-    (ir, ig, ib)
-}
-
-pub fn write_color(
-    color: &Color,
-    samples_per_pixel: i32,
-    w: &mut dyn Write,
-) -> std::io::Result<()> {
-    let (ir, ig, ib) = to_rgb(color, samples_per_pixel);
-    writeln!(w, "{} {} {}", ir, ig, ib)
-}
-
 pub fn unit_vector(v: &Vec3) -> Vec3 {
     v / v.length()
 }
