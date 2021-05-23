@@ -86,18 +86,26 @@ impl<'a> SceneBuilder<'a> {
 
 // Bounded Volume Hierarchy
 pub struct BHV<'a> {
-    left: Option<Box<dyn Bounded + 'a>>,
-    right: Option<Box<dyn Bounded + 'a>>,
-    bounds: AABB,
+    root: Node<'a>,
 }
 
-impl<'a> BHV<'a> {
-    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
-        let result = BHV::new_inner(scene.contents.as_mut_slice());
-        scene.contents.clear();
-        result
+enum Node<'a> {
+    Leaf(Box<dyn Bounded + 'a>),
+    Inner { bounds: AABB, left: Box<Node<'a>>, right: Box<Node<'a>> },
+}
+
+impl<'a> Node<'a> {
+    fn bounding_box(&self) -> AABB {
+        match self {
+            Node::Leaf(v) => v.bounding_box(),
+            Node::Inner { bounds, left: _, right: _ } => *bounds,
+        }
     }
-    pub fn new_inner<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> BHV<'a> {
+
+    fn new<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> Node<'a> {
+        if shapes.len() == 1 {
+            return Node::Leaf(shapes[0].take().unwrap());
+        }
         let axis = rand::thread_rng().gen_range(0..3);
         let get_dim =
             |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().min().e[axis];
@@ -109,71 +117,57 @@ impl<'a> BHV<'a> {
                 None => panic!("a = {} b = {}", get_dim(a), get_dim(b)),
             };
 
-        let left;
-        let right;
-        let bounds;
-        match shapes.len() {
-            1 => {
-                let v = shapes[0].take().unwrap();
-                bounds = v.bounding_box();
-                left = Some(v);
-                right = None;
-            }
-            // Optimize representation: two shapes become leaf nodes.
-            2 => {
-                let v_left;
-                let v_right;
-                match comparator(&shapes[0], &shapes[1]) {
-                    Ordering::Less | Ordering::Equal => {
-                        v_left = shapes[0].take().unwrap();
-                        v_right = shapes[1].take().unwrap();
-                    }
-                    Ordering::Greater => {
-                        v_left = shapes[1].take().unwrap();
-                        v_right = shapes[0].take().unwrap();
-                    }
-                }
-                bounds = v_left.bounding_box().surround(&v_right.bounding_box());
-                left = Some(v_left);
-                right = Some(v_right);
-            }
-            _ => {
-                shapes.sort_by(comparator);
-                let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
+        shapes.sort_by(comparator);
+        let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
 
-                let v_left = Box::new(BHV::new_inner(left_shapes));
-                let v_right = Box::new(BHV::new_inner(right_shapes));
-                bounds = v_left.bounding_box().surround(&v_right.bounding_box());
-                left = Some(v_left);
-                right = Some(v_right);
+        let left = Box::new(Node::new(left_shapes));
+        let right = Box::new(Node::new(right_shapes));
+        let bounds = left.bounding_box().surround(&right.bounding_box());
+        Node::Inner { left, right, bounds }
+    }
+
+    fn hit<'b>(&'b self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'b>> {
+        match self {
+            Node::Leaf(v) => v.hit(r, tmin, tmax),
+            Node::Inner { left, right, bounds } => {
+                if !bounds.hit(r, tmin, tmax) {
+                    return None;
+                }
+                let hit_left = left.hit(r, tmin, tmax);
+                let tmax_for_right = match hit_left.as_ref() {
+                    Some(h) => h.t,
+                    None => tmax,
+                };
+                let hit_right = right.hit(r, tmin, tmax_for_right);
+                match hit_right {
+                    Some(_) => hit_right,
+                    None => hit_left,
+                }
             }
         }
-        BHV { left, right, bounds }
+    }
+}
+
+impl<'a> BHV<'a> {
+    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
+        if scene.contents.is_empty() {
+            panic!();
+        }
+        let root = Node::new(scene.contents.as_mut_slice());
+        scene.contents.clear();
+        BHV { root }
     }
 }
 
 impl<'b> Hittable for BHV<'b> {
     fn hit<'a>(&'a self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'a>> {
-        if !self.bounds.hit(r, tmin, tmax) {
-            return None;
-        }
-
-        let hit_left = self.left.as_ref().map_or(None, |v| v.hit(r, tmin, tmax));
-        let tmax_for_right = match hit_left.as_ref() {
-            Some(h) => h.t,
-            None => tmax,
-        };
-        let hit_right = self.right.as_ref().map_or(None, |v| v.hit(r, tmin, tmax_for_right));
-        match hit_right {
-            Some(_) => hit_right,
-            None => hit_left,
-        }
+        self.root.hit(r, tmin, tmax)
     }
 }
 
 impl<'b> Bounded for BHV<'b> {
     fn bounding_box(&self) -> AABB {
-        self.bounds
+        self.root.bounding_box()
     }
 }
 
