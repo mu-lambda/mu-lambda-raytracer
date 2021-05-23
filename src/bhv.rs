@@ -128,6 +128,7 @@ impl<'a> BHV<'a> {
                 left = Some(objects[0].take().unwrap());
                 right = None;
             }
+            // Optimize representation: two objects become leaf nodes.
             2 => match comparator(&objects[0], &objects[1]) {
                 Ordering::Less => {
                     left = Some(objects[0].take().unwrap());
