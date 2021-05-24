@@ -69,3 +69,8 @@ pub fn random_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
 
     Box::new(bhv::BHV::new(&mut world))
 }
+
+pub enum World {
+    Simple,
+    Random,
+}

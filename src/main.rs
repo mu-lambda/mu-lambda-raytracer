@@ -18,7 +18,7 @@ use std::time::Instant;
 use vec::{Point3, Vec3};
 
 struct Parameters {
-    pub random_world: bool,
+    pub world: worlds::World,
     pub seed: Option<u64>,
 
     pub aspect_ratio: f64,
@@ -64,7 +64,13 @@ fn args() -> Parameters {
         .arg(arg("field_of_view", "90.0"))
         .arg(arg("aperture", "0.0"))
         .arg(Arg::with_name("focus_dist").long("focus_dist").takes_value(true))
-        .arg(Arg::with_name("random_world").long("random_world"))
+        .arg(
+            Arg::with_name("world")
+                .long("world")
+                .takes_value(true)
+                .possible_values(&["simple", "random"])
+                .default_value("simple"),
+        )
         .arg(Arg::with_name("seed").long("seed").takes_value(true))
         .get_matches();
 
@@ -86,7 +92,11 @@ fn args() -> Parameters {
     };
 
     Parameters {
-        random_world: matches.is_present("random_world"),
+        world: match matches.value_of("world").unwrap() {
+            "simple" => worlds::World::Simple,
+            "random" => worlds::World::Random,
+            _ => panic!(),
+        },
         seed: matches.value_of("seed").map(|v| v.parse::<u64>().unwrap()),
         aspect_ratio,
         render: raytrace::RenderingParams {
@@ -112,8 +122,10 @@ where
     let rng = rng_box.as_mut();
 
     // World
-    let world: Box<dyn Hittable> =
-        if parameters.random_world { worlds::random_world(rng) } else { worlds::simple_world() };
+    let world: Box<dyn Hittable> = match parameters.world {
+        worlds::World::Simple => worlds::simple_world(),
+        worlds::World::Random => worlds::random_world(rng),
+    };
 
     // Camera
     let cam = Camera::new(

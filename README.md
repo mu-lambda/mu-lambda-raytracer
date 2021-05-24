@@ -5,7 +5,7 @@ Implementation of a ray tracer in Rust, following [_Ray Tracing in One Weekend_]
 Sample rendering:
 
 ```bash
-cargo run --release -- --random_world --seed=42 \
+cargo run --release -- --world=random --seed=42 \
         --aspect_ratio="3:2" --image_width=1200 --samples_per_pixel=500 \
 	--lookfrom="13,2,3" --lookat="0,0,0" --field_of_view=20 \
         > test.ppm
@@ -16,7 +16,7 @@ cargo run --release -- --random_world --seed=42 \
 Same with focus blur:
 
 ```bash
-cargo run --release -- --random_world --seed=42 \
+cargo run --release -- --world=random --seed=42 \
         --aspect_ratio="3:2" --image_width=1200 --samples_per_pixel=500 \
         --aperture=0.1 --focus_dist=10.0 \
 	--lookfrom="13,2,3" --lookat="0,0,0" --field_of_view=20 \
