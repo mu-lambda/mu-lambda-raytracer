@@ -78,7 +78,7 @@ impl<'a> RayTracer<'a> {
     where
         Logger: Fn(usize) -> () + Sync,
     {
-        let result: Vec<Vec<RGB>> = (0..self.parameters.image_height)
+        (0..self.parameters.image_height)
             .into_par_iter()
             .map(|j| {
                 let mut line = vec![(0, 0, 0); self.parameters.image_width];
@@ -86,9 +86,7 @@ impl<'a> RayTracer<'a> {
                 logger(j);
                 line
             })
-            .collect();
-
-        result
+            .collect()
     }
 
     pub fn render_pixel(&self, i: usize, j: usize) -> RGB {

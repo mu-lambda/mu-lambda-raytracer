@@ -187,12 +187,26 @@ fn main() {
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(parameters.render.image_height);
     let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
+    let last_logged = AtomicUsize::new(0);
     let image = rt.render(|j| {
-        let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed);
-        if (rem_lines - 1) % 10 != 0 {
+        let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed) - 1;
+        if rem_lines == 0 {
+            eprint!("\r{:50}", "Done!");
             return;
         }
-        eprint!("\rScanlines remaining: {}  ", rem_lines - 1);
+        let elapsed = start_time.elapsed().as_millis() as usize;
+        let ll = last_logged.load(atomic::Ordering::Relaxed);
+        if ll < elapsed && elapsed - ll > 500 {
+            match last_logged.compare_exchange_weak(
+                ll,
+                elapsed,
+                atomic::Ordering::Relaxed,
+                atomic::Ordering::Relaxed,
+            ) {
+                Err(_) => return,
+                Ok(_) => eprint!("\rScanlines remaining: {:10}  ", rem_lines),
+            }
+        }
     });
     eprintln!("\nRendered in {:.3}s", start_time.elapsed().as_secs_f32());
     for j in (0..parameters.render.image_height).rev() {
