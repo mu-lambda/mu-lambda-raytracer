@@ -25,6 +25,7 @@ impl World for Simple {
     fn name(&self) -> &'static str {
         "simple"
     }
+
     fn camera(&self) -> WorldCamera {
         WorldCamera {
             lookfrom: Point3::new(-2.0, 2.0, 1.0),
@@ -125,6 +126,7 @@ impl World for RandomChk {
     fn name(&self) -> &'static str {
         "random_chk"
     }
+
     fn camera(&self) -> WorldCamera {
         WorldCamera {
             lookfrom: Point3::new(13.0, 2.0, 3.0),
@@ -189,6 +191,7 @@ impl World for TwoSpheres {
     fn name(&self) -> &'static str {
         "two_spheres"
     }
+
     fn camera(&self) -> WorldCamera {
         WorldCamera {
             lookfrom: Point3::new(13.0, 2.0, 3.0),

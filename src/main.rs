@@ -14,7 +14,7 @@ use clap::{App, Arg, ArgMatches};
 use hittable::Hittable;
 use raytrace::RayTracer;
 use rngator::Rngator;
-use std::sync::atomic::{self, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 use vec::{Point3, Vec3};
 
@@ -146,36 +146,25 @@ where
         parameters.aperture,
         parameters.focus_dist,
     );
-    //let cam = Camera::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, -1.0), Vec3::new(0.0, 1.0, 0.0),
-    //    parameters.field_of_view, aspect_ratio);
 
     // Render
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
-    let remaining_count = AtomicUsize::new(usize::max_value());
+    let remaining_count = AtomicUsize::new(usize::MAX);
     let rt = RayTracer::new_with_rng(&cam, world.as_ref(), parameters.render, rngator);
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|_, total| {
-        let _ = remaining_count.compare_exchange(
-            usize::max_value(),
-            total,
-            Ordering::Relaxed,
-            Ordering::Relaxed,
-        );
-        let remaining = remaining_count.fetch_sub(1, Ordering::Relaxed) - 1;
+        const R: Ordering = Ordering::Relaxed;
+        let _ = remaining_count.compare_exchange(usize::MAX, total, R, R);
+        let remaining = remaining_count.fetch_sub(1, R) - 1;
         if remaining == 0 {
             eprint!("\r{:50}", "Done!");
             return;
         }
         let elapsed = start_time.elapsed().as_millis() as usize;
-        let ll = last_logged.load(Ordering::Relaxed);
+        let ll = last_logged.load(R);
         if ll < elapsed && elapsed - ll > 300 {
-            match last_logged.compare_exchange_weak(
-                ll,
-                elapsed,
-                Ordering::Relaxed,
-                Ordering::Relaxed,
-            ) {
+            match last_logged.compare_exchange_weak(ll, elapsed, R, R) {
                 Err(_) => return,
                 Ok(_) => eprint!("\rRemaining: {:3}%  ", remaining * 100 / total),
             }
