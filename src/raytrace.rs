@@ -1,9 +1,8 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
-use crate::vec::{self, unit_vector, Color, Point3, Ray, Vec3};
+use crate::vec::{unit_vector, Color, Ray};
 use rand::Rng;
 use rayon::prelude::*;
-use std::sync::atomic::AtomicUsize;
 
 pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {
