@@ -1,9 +1,10 @@
 use crate::vec::{Color, Point3};
 
-pub trait Texture: Sync {
+pub trait Texture: Sync + Copy {
     fn value(&self, u: f64, v: f64, p: Point3) -> Color;
 }
 
+#[derive(Copy, Clone)]
 pub struct SolidColor {
     color: Color,
 }
@@ -23,6 +24,7 @@ impl Texture for SolidColor {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Checker<TOdd: Texture, TEven: Texture> {
     odd: TOdd,
     even: TEven,

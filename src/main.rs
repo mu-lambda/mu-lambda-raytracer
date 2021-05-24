@@ -69,7 +69,7 @@ fn args() -> Parameters {
             Arg::with_name("world")
                 .long("world")
                 .takes_value(true)
-                .possible_values(&["simple", "random", "random_chk"])
+                .possible_values(&["simple", "random", "random_chk", "two_spheres"])
                 .default_value("simple"),
         )
         .arg(Arg::with_name("seed").long("seed").takes_value(true))
@@ -97,6 +97,7 @@ fn args() -> Parameters {
             "simple" => worlds::World::Simple,
             "random" => worlds::World::Random,
             "random_chk" => worlds::World::RandomChk,
+            "two_spheres" => worlds::World::TwoSpheres,
             _ => panic!(),
         },
         seed: matches.value_of("seed").map(|v| v.parse::<u64>().unwrap()),
@@ -128,6 +129,7 @@ where
         worlds::World::Simple => worlds::simple_world(rng),
         worlds::World::Random => worlds::random_world(rng),
         worlds::World::RandomChk => worlds::random_world_chk(rng),
+        worlds::World::TwoSpheres => worlds::two_spheres(),
     };
 
     // Camera

@@ -12,7 +12,7 @@ pub trait Material {
     ) -> Option<(Color, Ray)>;
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Lambertian<T: Texture> {
     pub albedo: T,
 }
@@ -39,7 +39,7 @@ impl<T: Texture> Material for Lambertian<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Metal {
     pub albedo: Color,
     pub fuzz: f64,

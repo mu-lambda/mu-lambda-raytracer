@@ -1,5 +1,5 @@
 use crate::bhv;
-use crate::hittable::Hittable;
+use crate::hittable::{Hittable, HittableList};
 use crate::materials::{Dielectric, Lambertian, Metal};
 use crate::shapes::Sphere;
 use crate::textures;
@@ -7,7 +7,7 @@ use crate::textures::SolidColor;
 use crate::vec::{Color, Point3};
 use rand::Rng;
 
-pub fn simple_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
+pub fn simple_world(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
     let mat_ground = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
     let mat_center = Lambertian::new(SolidColor::new(0.1, 0.3, 0.5));
     let mat_left = Dielectric::new(1.5);
@@ -30,7 +30,7 @@ fn rnd01(rng: &mut dyn rand::RngCore) -> f64 {
     rng.gen_range(0.0..1.0)
 }
 
-pub fn random_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
+pub fn random_world(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
     let mut world = bhv::SceneBuilder::new();
 
     let ground_material = Lambertian::new(SolidColor::new(0.5, 0.5, 0.5));
@@ -76,7 +76,7 @@ pub fn random_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
     Box::new(bhv::BHV::new(&mut world, rng))
 }
 
-pub fn random_world_chk<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
+pub fn random_world_chk(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
     let mut world = bhv::SceneBuilder::new();
 
     let checker =
@@ -124,8 +124,19 @@ pub fn random_world_chk<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + '
     Box::new(bhv::BHV::new(&mut world, rng))
 }
 
+pub fn two_spheres() -> Box<dyn Hittable> {
+    let mut shapes = HittableList::new();
+    let checker =
+        textures::Checker::new(SolidColor::new(0.2, 0.3, 0.1), SolidColor::new(0.9, 0.9, 0.9));
+    shapes.add(Sphere::new(Point3::new(0.0, -10.0, 0.0), 10.0, Lambertian::new(checker)));
+    shapes.add(Sphere::new(Point3::new(0.0, 10.0, 0.0), 10.0, Lambertian::new(checker)));
+
+    Box::new(shapes)
+}
+
 pub enum World {
     Simple,
     Random,
     RandomChk,
+    TwoSpheres,
 }
