@@ -171,8 +171,8 @@ where
         }
     });
     eprintln!("\nRendered in {:.3}s", start_time.elapsed().as_secs_f32());
-    for j in (0..parameters.render.image_height).rev() {
-        for (r, g, b) in image[j].iter() {
+    for line in image.iter().rev() {
+        for (r, g, b) in line.iter() {
             println!("{} {} {}", r, g, b);
         }
     }
