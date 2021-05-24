@@ -13,6 +13,7 @@ use hittable::Hittable;
 use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
 use raytrace::RayTracer;
+use rngator::Rngator;
 use shapes::Sphere;
 use std::sync::atomic::{self, AtomicUsize};
 use std::time::Instant;
@@ -20,6 +21,7 @@ use vec::{Color, Point3, Vec3};
 
 struct Parameters {
     pub random_world: bool,
+    pub seed: Option<u64>,
 
     pub aspect_ratio: f64,
     pub render: raytrace::RenderingParams,
@@ -65,6 +67,7 @@ fn args() -> Parameters {
         .arg(arg("aperture", "0.0"))
         .arg(Arg::with_name("focus_dist").long("focus_dist").takes_value(true))
         .arg(Arg::with_name("random_world").long("random_world"))
+        .arg(Arg::with_name("seed").long("seed").takes_value(true))
         .get_matches();
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = matches.value_of("image_width").unwrap().parse::<usize>().unwrap();
@@ -77,6 +80,7 @@ fn args() -> Parameters {
 
     Parameters {
         random_world: matches.is_present("random_world"),
+        seed: matches.value_of("seed").map(|v| v.parse::<u64>().unwrap()),
         aspect_ratio,
         render: raytrace::RenderingParams {
             image_width,
@@ -120,9 +124,7 @@ fn rnd01(rng: &mut dyn rand::RngCore) -> f64 {
     rng.gen_range(0.0..1.0)
 }
 
-fn random_world<'a>() -> Box<dyn Hittable + 'a> {
-    let mut thread_rng = rand::thread_rng();
-    let rng = &mut thread_rng;
+fn random_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
     let mut world = bhv::SceneBuilder::new();
 
     let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
@@ -164,13 +166,16 @@ fn random_world<'a>() -> Box<dyn Hittable + 'a> {
     Box::new(bhv::BHV::new(&mut world))
 }
 
-fn main() {
-    // Image
-    let parameters = args();
+fn do_it<T>(parameters: Parameters, rngator: T)
+where
+    T: Rngator,
+{
+    let mut rng_box = rngator.rng();
+    let rng = rng_box.as_mut();
 
     // World
     let world: Box<dyn Hittable> =
-        if parameters.random_world { random_world() } else { simple_world() };
+        if parameters.random_world { random_world(rng) } else { simple_world() };
 
     // Camera
     let cam = Camera::new(
@@ -189,7 +194,7 @@ fn main() {
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(parameters.render.image_height);
-    let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
+    let rt = RayTracer::new_with_rng(&cam, world.as_ref(), parameters.render, rngator);
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|j| {
         let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed) - 1;
@@ -216,5 +221,14 @@ fn main() {
         for (r, g, b) in image[j].iter() {
             println!("{} {} {}", r, g, b);
         }
+    }
+}
+
+fn main() {
+    // Image
+    let parameters = args();
+    match parameters.seed {
+        None => do_it(parameters, rngator::ThreadRngator {}),
+        Some(seed) => do_it(parameters, rngator::SeedableRngator::new(seed)),
     }
 }
