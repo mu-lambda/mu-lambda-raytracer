@@ -3,6 +3,7 @@ mod camera;
 mod hittable;
 mod materials;
 mod raytrace;
+mod rngator;
 mod shapes;
 mod vec;
 
@@ -115,27 +116,29 @@ fn simple_world<'a>() -> Box<dyn Hittable + 'a> {
     Box::new(bhv)
 }
 
+fn rnd01(rng: &mut dyn rand::RngCore) -> f64 {
+    rng.gen_range(0.0..1.0)
+}
+
 fn random_world<'a>() -> Box<dyn Hittable + 'a> {
+    let mut thread_rng = rand::thread_rng();
+    let rng = &mut thread_rng;
     let mut world = bhv::SceneBuilder::new();
 
     let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
     world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
 
-    fn rnd() -> f64 {
-        rand::thread_rng().gen_range(0.0..1.0)
-    }
-
     for a in -11..11 {
         for b in -11..11 {
-            let choose_mat = rnd();
-            let center = Point3::new(a as f64 + 0.9 * rnd(), 0.2, b as f64 + 0.9 * rnd());
+            let choose_mat = rnd01(rng);
+            let center = Point3::new(a as f64 + 0.9 * rnd01(rng), 0.2, b as f64 + 0.9 * rnd01(rng));
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
-                    let albedo = Color::random_unit() * Color::random_unit();
+                    let albedo = Color::random_unit(rng) * Color::random_unit(rng);
                     world.add(Sphere::new(center, 0.2, Lambertian::new(albedo)));
                 } else if choose_mat < 0.95 {
-                    let albedo = Color::random(0.5, 1.0);
+                    let albedo = Color::random(0.5, 1.0, rng);
                     let fuzz = rand::thread_rng().gen_range(0.0..0.5);
                     world.add(Sphere::new(center, 0.2, Metal::new(albedo, fuzz)));
                 } else {

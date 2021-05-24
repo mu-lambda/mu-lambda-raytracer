@@ -1,17 +1,23 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
+use crate::rngator;
 use crate::vec::{unit_vector, Color, Ray};
 use rand::Rng;
 use rayon::prelude::*;
 
-pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
+pub fn ray_color(
+    ray: &Ray,
+    world: &dyn Hittable,
+    depth: i32,
+    rng: &mut dyn rand::RngCore,
+) -> Color {
     if depth <= 0 {
         return Color::ZERO;
     }
     match world.hit(ray, 0.001, f64::INFINITY) {
-        Some(h) => match h.material.scatter(ray, &h) {
+        Some(h) => match h.material.scatter(ray, &h, rng) {
             Some((attenuation, scattered)) => {
-                return attenuation * ray_color(&scattered, world, depth - 1);
+                return attenuation * ray_color(&scattered, world, depth - 1, rng);
             }
             None => {
                 return Color::ZERO;
@@ -48,10 +54,14 @@ pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
     (ir, ig, ib)
 }
 
-pub struct RayTracer<'a> {
+pub struct RayTracer<'a, T = rngator::ThreadRngator>
+where
+    T: rngator::Rngator,
+{
     camera: &'a Camera,
     world: &'a dyn Hittable,
     parameters: RenderingParams,
+    rng: T,
 }
 
 impl<'a> RayTracer<'a> {
@@ -59,8 +69,19 @@ impl<'a> RayTracer<'a> {
         camera: &'a Camera,
         world: &'a dyn Hittable,
         parameters: RenderingParams,
-    ) -> RayTracer<'a> {
-        RayTracer { camera, world, parameters }
+    ) -> RayTracer<'a, rngator::ThreadRngator> {
+        RayTracer::new_with_rng(camera, world, parameters, rngator::ThreadRngator {})
+    }
+}
+
+impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
+    pub fn new_with_rng(
+        camera: &'a Camera,
+        world: &'a dyn Hittable,
+        parameters: RenderingParams,
+        rng: T,
+    ) -> RayTracer<'a, T> {
+        RayTracer { camera, world, parameters, rng }
     }
 
     pub fn render_line(&self, j: usize, result: &mut [RGB]) {
@@ -89,15 +110,16 @@ impl<'a> RayTracer<'a> {
     }
 
     pub fn render_pixel(&self, i: usize, j: usize) -> RGB {
-        let mut rng = rand::thread_rng();
+        let mut rng_box = self.rng.rng();
+        let rng = rng_box.as_mut();
         let mut pixel_color = Color::ZERO;
         for _ in 0..self.parameters.samples_per_pixel {
             let u =
                 ((i as f64) + rng.gen_range(0.0..1.0)) / (self.parameters.image_width as f64 - 1.0);
             let v = ((j as f64) + rng.gen_range(0.0..1.0))
                 / (self.parameters.image_height as f64 - 1.0);
-            let r = self.camera.get_ray(u, v);
-            pixel_color = pixel_color + ray_color(&r, self.world, self.parameters.max_depth);
+            let r = self.camera.get_ray(u, v, rng);
+            pixel_color = pixel_color + ray_color(&r, self.world, self.parameters.max_depth, rng);
         }
 
         to_rgb(&pixel_color, self.parameters.samples_per_pixel)

@@ -3,7 +3,12 @@ use crate::vec::{dot, unit_vector, Color, Ray, Vec3};
 use rand::Rng;
 
 pub trait Material {
-    fn scatter(&self, ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)>;
+    fn scatter(
+        &self,
+        ray: &Ray,
+        h: &hittable::Hit,
+        rng: &mut dyn rand::RngCore,
+    ) -> Option<(Color, Ray)>;
 }
 
 #[derive(Clone)]
@@ -18,8 +23,13 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)> {
-        let mut scatter_direction = h.normal + Vec3::random_in_hemisphere(&h.normal);
+    fn scatter(
+        &self,
+        _ray: &Ray,
+        h: &hittable::Hit,
+        rng: &mut dyn rand::RngCore,
+    ) -> Option<(Color, Ray)> {
+        let mut scatter_direction = h.normal + Vec3::random_in_hemisphere(&h.normal, rng);
         if scatter_direction.near_zero() {
             scatter_direction = h.normal;
         }
@@ -43,9 +53,14 @@ fn reflect(v: Vec3, n: Vec3) -> Vec3 {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)> {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        h: &hittable::Hit,
+        rng: &mut dyn rand::RngCore,
+    ) -> Option<(Color, Ray)> {
         let reflected = reflect(unit_vector(&ray.dir), h.normal);
-        let scattered = Ray::new(h.p, reflected + self.fuzz * Vec3::random_in_unit_sphere());
+        let scattered = Ray::new(h.p, reflected + self.fuzz * Vec3::random_in_unit_sphere(rng));
         if dot(scattered.dir, h.normal) > 0.0 {
             Some((self.albedo, scattered))
         } else {
@@ -80,7 +95,12 @@ fn reflectance(cos_theta: f64, refraction_ratio: f64) -> f64 {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, h: &hittable::Hit) -> Option<(Color, Ray)> {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        h: &hittable::Hit,
+        rng: &mut dyn rand::RngCore,
+    ) -> Option<(Color, Ray)> {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio =
             if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
@@ -91,7 +111,7 @@ impl Material for Dielectric {
 
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
         let direction = if cannot_refract
-            || reflectance(cos_theta, refraction_ratio) > rand::thread_rng().gen_range(0.0..1.0)
+            || reflectance(cos_theta, refraction_ratio) > rng.gen_range(0.0..1.0)
         {
             reflect(unit_direction, h.normal)
         } else {

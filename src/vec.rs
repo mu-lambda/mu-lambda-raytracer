@@ -13,30 +13,29 @@ impl Vec3 {
         Vec3 { e: { [e0, e1, e2] } }
     }
 
-    pub fn random(min: f64, max: f64) -> Vec3 {
-        let mut rng = rand::thread_rng();
+    pub fn random(min: f64, max: f64, rng: &mut dyn rand::RngCore) -> Vec3 {
         Vec3::new(rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max))
     }
 
-    pub fn random_unit() -> Vec3 {
-        Vec3::random(0.0, 1.0)
+    pub fn random_unit(rng: &mut dyn rand::RngCore) -> Vec3 {
+        Vec3::random(0.0, 1.0, rng)
     }
 
-    pub fn random_in_unit_sphere() -> Vec3 {
+    pub fn random_in_unit_sphere(rng: &mut dyn rand::RngCore) -> Vec3 {
         loop {
-            let p = Vec3::random(-1.0, 1.0);
+            let p = Vec3::random(-1.0, 1.0, rng);
             if p.length_squared() < 1.0 {
                 return p;
             }
         }
     }
 
-    pub fn random_unit_vector() -> Vec3 {
-        unit_vector(&Vec3::random_in_unit_sphere())
+    pub fn random_unit_vector(r: &mut dyn rand::RngCore) -> Vec3 {
+        unit_vector(&Vec3::random_in_unit_sphere(r))
     }
 
-    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
-        let in_unit_sphere = Vec3::random_in_unit_sphere();
+    pub fn random_in_hemisphere(normal: &Vec3, r: &mut dyn rand::RngCore) -> Vec3 {
+        let in_unit_sphere = Vec3::random_in_unit_sphere(r);
         if dot(in_unit_sphere, *normal) > 0.0 {
             return in_unit_sphere;
         } else {
@@ -44,8 +43,7 @@ impl Vec3 {
         }
     }
 
-    pub fn random_in_unit_disk() -> Vec3 {
-        let mut r = rand::thread_rng();
+    pub fn random_in_unit_disk(r: &mut dyn rand::RngCore) -> Vec3 {
         loop {
             let p = Vec3::new(r.gen_range(-1.0..1.0), r.gen_range(-1.0..1.0), 0.0);
             if p.length_squared() < 1.0 {
