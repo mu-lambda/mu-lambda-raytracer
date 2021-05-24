@@ -14,6 +14,7 @@ use rand::Rng;
 use raytrace::RayTracer;
 use shapes::Sphere;
 use std::io::{self, Write};
+use std::time::{Duration, Instant};
 use vec::{unit_vector, Color, Point3, Ray, Vec3};
 
 struct Parameters {
@@ -187,6 +188,7 @@ fn main() {
     let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
     let mut line = vec![(0, 0, 0); parameters.render.image_width];
 
+    let start_time = Instant::now();
     for j in (0..parameters.render.image_height).rev() {
         eprint!("\rScanlines remaining: {}    ", j);
         io::stderr().flush().unwrap();
@@ -196,4 +198,6 @@ fn main() {
             println!("{} {} {}", r, g, b);
         }
     }
+    let elapsed = start_time.elapsed();
+    eprintln!("\nRendered in {:.3}s", elapsed.as_secs_f32());
 }
