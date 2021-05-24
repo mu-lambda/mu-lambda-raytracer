@@ -2,11 +2,11 @@ use crate::bhv;
 use crate::hittable::Hittable;
 use crate::materials::{Dielectric, Lambertian, Metal};
 use crate::shapes::Sphere;
-use crate::textures::{SolidColor, Texture};
+use crate::textures::SolidColor;
 use crate::vec::{Color, Point3};
 use rand::Rng;
 
-pub fn simple_world<'a>() -> Box<dyn Hittable + 'a> {
+pub fn simple_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
     let mat_ground = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
     let mat_center = Lambertian::new(SolidColor::new(0.1, 0.3, 0.5));
     let mat_left = Dielectric::new(1.5);
@@ -21,7 +21,7 @@ pub fn simple_world<'a>() -> Box<dyn Hittable + 'a> {
         .add(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left))
         .add(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right));
 
-    let bhv = bhv::BHV::new(&mut world);
+    let bhv = bhv::BHV::new(&mut world, rng);
     Box::new(bhv)
 }
 
@@ -50,7 +50,7 @@ pub fn random_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
                     ));
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(0.5, 1.0, rng);
-                    let fuzz = rand::thread_rng().gen_range(0.0..0.5);
+                    let fuzz = rng.gen_range(0.0..0.5);
                     world.add(Sphere::new(center, 0.2, Metal::new(albedo, fuzz)));
                 } else {
                     world.add(Sphere::new(center, 0.2, Dielectric::new(1.5)));
@@ -72,7 +72,7 @@ pub fn random_world<'a>(rng: &mut dyn rand::RngCore) -> Box<dyn Hittable + 'a> {
             Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
         ));
 
-    Box::new(bhv::BHV::new(&mut world))
+    Box::new(bhv::BHV::new(&mut world, rng))
 }
 
 pub enum World {

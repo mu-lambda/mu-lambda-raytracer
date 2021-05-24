@@ -87,8 +87,8 @@ pub struct BHV<'a> {
 }
 
 impl<'a> BHV<'a> {
-    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>) -> BHV<'a> {
-        let root = Node::new(scene.contents.as_mut_slice());
+    pub fn new<'b>(scene: &'b mut SceneBuilder<'a>, rng: &mut dyn rand::RngCore) -> BHV<'a> {
+        let root = Node::new(scene.contents.as_mut_slice(), rng);
         scene.contents.clear();
         BHV { root }
     }
@@ -119,12 +119,15 @@ impl<'a> Node<'a> {
         }
     }
 
-    fn new<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>]) -> Node<'a> {
+    fn new<'b>(
+        shapes: &'b mut [Option<Box<dyn Bounded + 'a>>],
+        rng: &mut dyn rand::RngCore,
+    ) -> Node<'a> {
         match shapes {
             [] => Node::Leaf { shape: Box::new(shapes::Empty::INSTANCE) },
             [v] => Node::Leaf { shape: v.take().unwrap() },
             _ => {
-                let axis = rand::thread_rng().gen_range(0..3);
+                let axis = rng.gen_range(0..3);
                 let get_dim = |a: &Option<Box<dyn Bounded + 'a>>| {
                     a.as_ref().unwrap().bounding_box().minimum.e[axis]
                 };
@@ -139,8 +142,8 @@ impl<'a> Node<'a> {
                 shapes.sort_by(comparator);
                 let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);
 
-                let left = Box::new(Node::new(left_shapes));
-                let right = Box::new(Node::new(right_shapes));
+                let left = Box::new(Node::new(left_shapes, rng));
+                let right = Box::new(Node::new(right_shapes, rng));
                 let bounds = left.bounding_box().surround(&right.bounding_box());
                 Node::Inner { left, right, bounds }
             }

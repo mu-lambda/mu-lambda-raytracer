@@ -124,7 +124,7 @@ where
 
     // World
     let world: Box<dyn Hittable> = match parameters.world {
-        worlds::World::Simple => worlds::simple_world(),
+        worlds::World::Simple => worlds::simple_world(rng),
         worlds::World::Random => worlds::random_world(rng),
     };
 
