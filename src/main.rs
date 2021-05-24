@@ -165,7 +165,7 @@ where
         let ll = last_logged.load(R);
         if ll < elapsed && elapsed - ll > 300 {
             match last_logged.compare_exchange_weak(ll, elapsed, R, R) {
-                Err(_) => return,
+                Err(_) => return, // Someone got to print first, exiting.
                 Ok(_) => eprint!("\rRemaining: {:3}%  ", remaining * 100 / total),
             }
         }

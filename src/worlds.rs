@@ -87,11 +87,8 @@ impl World for Random {
                 if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                     if choose_mat < 0.8 {
                         let albedo = Color::random_unit(rng) * Color::random_unit(rng);
-                        world.add(Sphere::new(
-                            center,
-                            0.2,
-                            Lambertian::new(SolidColor::from_color(albedo)),
-                        ));
+                        let solid = SolidColor::from_color(albedo);
+                        world.add(Sphere::new(center, 0.2, Lambertian::new(solid)));
                     } else if choose_mat < 0.95 {
                         let albedo = Color::random(0.5, 1.0, rng);
                         let fuzz = rng.gen_range(0.0..0.5);
