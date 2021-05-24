@@ -7,7 +7,7 @@ pub struct Camera {
     vertical: Vec3,
     u: Vec3,
     v: Vec3,
-    w: Vec3,
+    //w: Vec3,
     lens_radius: f64,
 }
 
@@ -41,7 +41,6 @@ impl Camera {
             vertical,
             u,
             v,
-            w,
             lens_radius: aperture / 2.0,
         };
     }

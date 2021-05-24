@@ -1,6 +1,6 @@
 use crate::hittable::{Hit, Hittable};
 use crate::shapes;
-use crate::vec::{Point3, Ray, Vec3};
+use crate::vec::{Point3, Ray};
 use rand::Rng;
 use std::cmp::Ordering;
 use std::fmt;
@@ -171,6 +171,7 @@ impl<'a> Node<'a> {
 #[cfg(test)]
 mod aabb_tests {
     use super::*;
+    use crate::vec::Vec3;
 
     #[test]
     fn test_minmax() {

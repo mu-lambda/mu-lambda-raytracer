@@ -1,11 +1,11 @@
-mod bhv;
-mod camera;
-mod hittable;
-mod materials;
-mod raytrace;
-mod rngator;
-mod shapes;
-mod vec;
+pub mod bhv;
+pub mod camera;
+pub mod hittable;
+pub mod materials;
+pub mod raytrace;
+pub mod rngator;
+pub mod shapes;
+pub mod vec;
 
 use camera::Camera;
 use clap::{App, Arg};
@@ -196,7 +196,7 @@ where
     let remaining_count = AtomicUsize::new(parameters.render.image_height);
     let rt = RayTracer::new_with_rng(&cam, world.as_ref(), parameters.render, rngator);
     let last_logged = AtomicUsize::new(0);
-    let image = rt.render(|j| {
+    let image = rt.render(|_| {
         let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed) - 1;
         if rem_lines == 0 {
             eprint!("\r{:50}", "Done!");

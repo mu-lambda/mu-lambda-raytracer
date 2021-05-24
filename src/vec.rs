@@ -1,6 +1,5 @@
 use rand::Rng;
 use std::fmt;
-use std::io::Write;
 use std::ops;
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
