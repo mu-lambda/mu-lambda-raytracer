@@ -8,7 +8,7 @@ pub mod shapes;
 pub mod vec;
 
 use camera::Camera;
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
 use hittable::Hittable;
 use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
@@ -69,9 +69,18 @@ fn args() -> Parameters {
         .arg(Arg::with_name("random_world").long("random_world"))
         .arg(Arg::with_name("seed").long("seed").takes_value(true))
         .get_matches();
+
+    fn val<'a, T>(m: &ArgMatches<'a>, name: &str) -> T
+    where
+        T: std::str::FromStr,
+        <T as std::str::FromStr>::Err: std::fmt::Debug,
+    {
+        m.value_of(name).unwrap().parse::<T>().unwrap()
+    }
+
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
-    let image_width = matches.value_of("image_width").unwrap().parse::<usize>().unwrap();
-    let lookfrom = parse_vector(matches.value_of("lookfrom").unwrap());
+    let image_width = val::<usize>(&matches, "image_width");
+    let lookfrom = parse_vector(&matches.value_of("lookfrom").unwrap());
     let lookat = parse_vector(matches.value_of("lookat").unwrap());
     let focus_dist = match matches.value_of("focus_dist") {
         None => (lookat - lookfrom).length(),
@@ -85,18 +94,14 @@ fn args() -> Parameters {
         render: raytrace::RenderingParams {
             image_width,
             image_height: (image_width as f64 / aspect_ratio) as usize,
-            samples_per_pixel: matches
-                .value_of("samples_per_pixel")
-                .unwrap()
-                .parse::<i32>()
-                .unwrap(),
-            max_depth: matches.value_of("max_depth").unwrap().parse::<i32>().unwrap(),
+            samples_per_pixel: val::<i32>(&matches, "samples_per_pixel"),
+            max_depth: val::<i32>(&matches, "max_depth"),
         },
         lookfrom,
         lookat,
         up: parse_vector(matches.value_of("up").unwrap()),
-        field_of_view: matches.value_of("field_of_view").unwrap().parse::<f64>().unwrap(),
-        aperture: matches.value_of("aperture").unwrap().parse::<f64>().unwrap(),
+        field_of_view: val::<f64>(&matches, "field_of_view"),
+        aperture: val::<f64>(&matches, "aperture"),
         focus_dist,
     }
 }
