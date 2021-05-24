@@ -7,14 +7,33 @@ use crate::textures::SolidColor;
 use crate::vec::{Color, Point3};
 use rand::Rng;
 
-pub trait WorldGen {
-    fn gen(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable>;
+pub trait World {
+    fn name(&self) -> &'static str;
+    fn camera(&self) -> WorldCamera;
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable>;
+}
+
+pub struct WorldCamera {
+    pub lookfrom: Point3,
+    pub lookat: Point3,
+    pub field_of_view: f64,
 }
 
 struct Simple {}
 
-impl WorldGen for Simple {
-    fn gen(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+impl World for Simple {
+    fn name(&self) -> &'static str {
+        "simple"
+    }
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(-2.0, 2.0, 1.0),
+            lookat: Point3::new(0.0, 0.0, -1.0),
+            field_of_view: 20.0,
+        }
+    }
+
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mat_ground = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
         let mat_center = Lambertian::new(SolidColor::new(0.1, 0.3, 0.5));
         let mat_left = Dielectric::new(1.5);
@@ -40,8 +59,19 @@ fn rnd01(rng: &mut dyn rand::RngCore) -> f64 {
 
 struct Random {}
 
-impl WorldGen for Random {
-    fn gen(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+impl World for Random {
+    fn name(&self) -> &'static str {
+        "random"
+    }
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(13.0, 2.0, 3.0),
+            lookat: Point3::new(0.0, 0.0, 0.0),
+            field_of_view: 20.0,
+        }
+    }
+
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut world = bhv::SceneBuilder::new();
 
         let ground_material = Lambertian::new(SolidColor::new(0.5, 0.5, 0.5));
@@ -91,8 +121,19 @@ impl WorldGen for Random {
 
 struct RandomChk {}
 
-impl WorldGen for RandomChk {
-    fn gen(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+impl World for RandomChk {
+    fn name(&self) -> &'static str {
+        "random_chk"
+    }
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(13.0, 2.0, 3.0),
+            lookat: Point3::new(0.0, 0.0, 0.0),
+            field_of_view: 20.0,
+        }
+    }
+
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut world = bhv::SceneBuilder::new();
 
         let checker =
@@ -144,8 +185,19 @@ impl WorldGen for RandomChk {
 
 struct TwoSpheres {}
 
-impl WorldGen for TwoSpheres {
-    fn gen(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+impl World for TwoSpheres {
+    fn name(&self) -> &'static str {
+        "two_spheres"
+    }
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(13.0, 2.0, 3.0),
+            lookat: Point3::new(0.0, 0.0, 0.0),
+            field_of_view: 20.0,
+        }
+    }
+
+    fn build(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut shapes = HittableList::new();
         let checker =
             textures::Checker::new(SolidColor::new(0.2, 0.3, 0.1), SolidColor::new(0.9, 0.9, 0.9));
@@ -156,43 +208,6 @@ impl WorldGen for TwoSpheres {
     }
 }
 
-pub struct World {
-    pub name: &'static str,
-    pub lookfrom: Point3,
-    pub lookat: Point3,
-    pub field_of_view: f64,
-    pub gen: Box<dyn WorldGen>,
-}
-
-pub fn worlds() -> Vec<World> {
-    vec![
-        World {
-            name: "simple",
-            lookfrom: Point3::new(-2.0, 2.0, 1.0),
-            lookat: Point3::new(0.0, 0.0, -1.0),
-            field_of_view: 20.0,
-            gen: Box::new(Simple {}),
-        },
-        World {
-            name: "random",
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-            gen: Box::new(Random {}),
-        },
-        World {
-            name: "random_chk",
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-            gen: Box::new(RandomChk {}),
-        },
-        World {
-            name: "two_spheres",
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-            gen: Box::new(TwoSpheres {}),
-        },
-    ]
+pub fn worlds() -> Vec<Box<dyn World>> {
+    vec![Box::new(Simple {}), Box::new(Random {}), Box::new(RandomChk {}), Box::new(TwoSpheres {})]
 }

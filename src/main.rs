@@ -14,12 +14,12 @@ use clap::{App, Arg, ArgMatches};
 use hittable::Hittable;
 use raytrace::RayTracer;
 use rngator::Rngator;
-use std::sync::atomic::{self, AtomicIsize, AtomicUsize};
+use std::sync::atomic::{self, AtomicUsize};
 use std::time::Instant;
 use vec::{Point3, Vec3};
 
 struct Parameters {
-    pub world: worlds::World,
+    pub world: Box<dyn worlds::World>,
     pub seed: Option<u64>,
 
     pub aspect_ratio: f64,
@@ -58,7 +58,7 @@ fn parse_vector(s: &str) -> Vec3 {
 
 fn args() -> Parameters {
     let mut worlds = worlds::worlds();
-    let world_names: Vec<&'static str> = worlds.iter().map(|w| w.name).collect();
+    let world_names: Vec<&'static str> = worlds.iter().map(|w| w.name()).collect();
     let matches = App::new("mulambda raytracer")
         .version("0.1")
         .arg(arg("aspect_ratio", "16:9"))
@@ -90,16 +90,17 @@ fn args() -> Parameters {
     }
 
     let world_name = matches.value_of("world").unwrap();
-    let world = worlds.remove(worlds.iter().position(|w| w.name == world_name).unwrap());
+    let world = worlds.remove(worlds.iter().position(|w| w.name() == world_name).unwrap());
 
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = val::<usize>(&matches, "image_width");
 
-    let lookfrom = matches.value_of("lookfrom").map_or(world.lookfrom, |v| parse_vector(&v));
-    let lookat = matches.value_of("lookat").map_or(world.lookat, |v| parse_vector(&v));
+    let lookfrom =
+        matches.value_of("lookfrom").map_or(world.camera().lookfrom, |v| parse_vector(&v));
+    let lookat = matches.value_of("lookat").map_or(world.camera().lookat, |v| parse_vector(&v));
     let field_of_view = matches
         .value_of("field_of_view")
-        .map_or(world.field_of_view, |v| v.parse::<f64>().unwrap());
+        .map_or(world.camera().field_of_view, |v| v.parse::<f64>().unwrap());
 
     let focus_dist = match matches.value_of("focus_dist") {
         None => (lookat - lookfrom).length(),
@@ -133,7 +134,7 @@ where
     let rng = rng_box.as_mut();
 
     // World
-    let world: Box<dyn Hittable> = parameters.world.gen.gen(rng);
+    let world: Box<dyn Hittable> = parameters.world.build(rng);
 
     // Camera
     let cam = Camera::new(
@@ -151,13 +152,13 @@ where
     // Render
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
-    let remaining_count = AtomicIsize::new(-1);
+    let remaining_count = AtomicUsize::new(usize::max_value());
     let rt = RayTracer::new_with_rng(&cam, world.as_ref(), parameters.render, rngator);
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|_, total| {
         let _ = remaining_count.compare_exchange(
-            -1,
-            total as isize,
+            usize::max_value(),
+            total,
             atomic::Ordering::Relaxed,
             atomic::Ordering::Relaxed,
         );
@@ -168,7 +169,7 @@ where
         }
         let elapsed = start_time.elapsed().as_millis() as usize;
         let ll = last_logged.load(atomic::Ordering::Relaxed);
-        if ll < elapsed && elapsed - ll > 500 {
+        if ll < elapsed && elapsed - ll > 300 {
             match last_logged.compare_exchange_weak(
                 ll,
                 elapsed,
@@ -176,7 +177,7 @@ where
                 atomic::Ordering::Relaxed,
             ) {
                 Err(_) => return,
-                Ok(_) => eprint!("\rScanlines remaining: {:10}  ", rem_lines),
+                Ok(_) => eprint!("\rRemaining: {:3}%  ", rem_lines * 100 / total),
             }
         }
     });
