@@ -37,6 +37,10 @@ fn arg<'a>(name: &'a str, default_value: &'a str) -> Arg<'a, 'a> {
     Arg::with_name(name).long(name).takes_value(true).default_value(default_value)
 }
 
+fn undef_arg<'a>(name: &'a str, help: &'a str) -> Arg<'a, 'a> {
+    Arg::with_name(name).long(name).help(help).takes_value(true)
+}
+
 fn parse_aspect_ratio(s: &str) -> f64 {
     let v: Vec<&str> = s.split(':').collect();
     return v[0].parse::<i32>().unwrap() as f64 / v[1].parse::<i32>().unwrap() as f64;
@@ -53,23 +57,25 @@ fn parse_vector(s: &str) -> Vec3 {
 }
 
 fn args() -> Parameters {
+    let mut worlds = worlds::worlds();
+    let world_names: Vec<&'static str> = worlds.iter().map(|w| w.name).collect();
     let matches = App::new("mulambda raytracer")
         .version("0.1")
         .arg(arg("aspect_ratio", "16:9"))
         .arg(arg("image_width", "400"))
         .arg(arg("samples_per_pixel", "200"))
         .arg(arg("max_depth", "50"))
-        .arg(arg("lookfrom", "-2,2,1"))
-        .arg(arg("lookat", "0,0,-1"))
+        .arg(undef_arg("lookfrom", "[point] camera position"))
+        .arg(undef_arg("lookat", "[point] point that camera looks at"))
         .arg(arg("up", "0,1.0,0"))
-        .arg(arg("field_of_view", "90.0"))
+        .arg(undef_arg("field_of_view", "[float] field of view, in degrees"))
         .arg(arg("aperture", "0.0"))
         .arg(Arg::with_name("focus_dist").long("focus_dist").takes_value(true))
         .arg(
             Arg::with_name("world")
                 .long("world")
                 .takes_value(true)
-                .possible_values(&["simple", "random", "random_chk", "two_spheres"])
+                .possible_values(&world_names)
                 .default_value("simple"),
         )
         .arg(Arg::with_name("seed").long("seed").takes_value(true))
@@ -83,23 +89,25 @@ fn args() -> Parameters {
         m.value_of(name).unwrap().parse::<T>().unwrap()
     }
 
+    let world_name = matches.value_of("world").unwrap();
+    let world = worlds.remove(worlds.iter().position(|w| w.name == world_name).unwrap());
+
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = val::<usize>(&matches, "image_width");
-    let lookfrom = parse_vector(&matches.value_of("lookfrom").unwrap());
-    let lookat = parse_vector(matches.value_of("lookat").unwrap());
+
+    let lookfrom = matches.value_of("lookfrom").map_or(world.lookfrom, |v| parse_vector(&v));
+    let lookat = matches.value_of("lookat").map_or(world.lookat, |v| parse_vector(&v));
+    let field_of_view = matches
+        .value_of("field_of_view")
+        .map_or(world.field_of_view, |v| v.parse::<f64>().unwrap());
+
     let focus_dist = match matches.value_of("focus_dist") {
         None => (lookat - lookfrom).length(),
         Some(v) => v.parse::<f64>().unwrap(),
     };
 
     Parameters {
-        world: match matches.value_of("world").unwrap() {
-            "simple" => worlds::World::Simple,
-            "random" => worlds::World::Random,
-            "random_chk" => worlds::World::RandomChk,
-            "two_spheres" => worlds::World::TwoSpheres,
-            _ => panic!(),
-        },
+        world,
         seed: matches.value_of("seed").map(|v| v.parse::<u64>().unwrap()),
         aspect_ratio,
         render: raytrace::RenderingParams {
@@ -111,7 +119,7 @@ fn args() -> Parameters {
         lookfrom,
         lookat,
         up: parse_vector(matches.value_of("up").unwrap()),
-        field_of_view: val::<f64>(&matches, "field_of_view"),
+        field_of_view,
         aperture: val::<f64>(&matches, "aperture"),
         focus_dist,
     }
@@ -125,12 +133,7 @@ where
     let rng = rng_box.as_mut();
 
     // World
-    let world: Box<dyn Hittable> = match parameters.world {
-        worlds::World::Simple => worlds::simple_world(rng),
-        worlds::World::Random => worlds::random_world(rng),
-        worlds::World::RandomChk => worlds::random_world_chk(rng),
-        worlds::World::TwoSpheres => worlds::two_spheres(),
-    };
+    let world: Box<dyn Hittable> = parameters.world.gen.gen(rng);
 
     // Camera
     let cam = Camera::new(
