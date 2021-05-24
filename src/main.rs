@@ -13,9 +13,9 @@ use materials::{Dielectric, Lambertian, Metal};
 use rand::Rng;
 use raytrace::RayTracer;
 use shapes::Sphere;
-use std::io::{self, Write};
-use std::time::{Duration, Instant};
-use vec::{unit_vector, Color, Point3, Ray, Vec3};
+use std::sync::atomic::{self, AtomicUsize};
+use std::time::Instant;
+use vec::{Color, Point3, Vec3};
 
 struct Parameters {
     pub random_world: bool,
@@ -162,7 +162,6 @@ fn random_world<'a>() -> Box<dyn Hittable + 'a> {
 }
 
 fn main() {
-    let mut rng = rand::thread_rng();
     // Image
     let parameters = args();
 
@@ -186,10 +185,14 @@ fn main() {
     // Render
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
-
+    let remaining_count = AtomicUsize::new(parameters.render.image_height);
     let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
     let image = rt.render(|j| {
-        eprint!("\rScanlines remaining: {}", parameters.render.image_height - j);
+        let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed);
+        if (rem_lines - 1) % 10 != 0 {
+            return;
+        }
+        eprint!("\rScanlines remaining: {}  ", rem_lines - 1);
     });
     eprintln!("\nRendered in {:.3}s", start_time.elapsed().as_secs_f32());
     for j in (0..parameters.render.image_height).rev() {

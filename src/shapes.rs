@@ -39,7 +39,7 @@ impl<T: Material> Sphere<T> {
     }
 }
 
-impl<T: Material> Hittable for Sphere<T> {
+impl<T: Material + Sync> Hittable for Sphere<T> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let oc = &r.orig - &self.center;
         let a = r.dir.length_squared();
@@ -65,7 +65,7 @@ impl<T: Material> Hittable for Sphere<T> {
     }
 }
 
-impl<T: Material> Bounded for Sphere<T> {
+impl<T: Material + Sync> Bounded for Sphere<T> {
     fn bounding_box(&self) -> AABB {
         let rad_v = Vec3::new(self.radius, self.radius, self.radius);
         AABB::new(self.center - rad_v, self.center + rad_v)

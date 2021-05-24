@@ -2,6 +2,8 @@ use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::vec::{self, unit_vector, Color, Point3, Ray, Vec3};
 use rand::Rng;
+use rayon::prelude::*;
+use std::sync::atomic::AtomicUsize;
 
 pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {
@@ -74,16 +76,17 @@ impl<'a> RayTracer<'a> {
 
     pub fn render<Logger>(&self, logger: Logger) -> Vec<Vec<RGB>>
     where
-        Logger: Fn(usize) -> (),
+        Logger: Fn(usize) -> () + Sync,
     {
-        let mut result = Vec::with_capacity(self.parameters.image_height);
-
-        for j in 0..self.parameters.image_height {
-            let mut line = vec![(0, 0, 0); self.parameters.image_width];
-            self.render_line(j, line.as_mut_slice());
-            result.push(line);
-            logger(j);
-        }
+        let result: Vec<Vec<RGB>> = (0..self.parameters.image_height)
+            .into_par_iter()
+            .map(|j| {
+                let mut line = vec![(0, 0, 0); self.parameters.image_width];
+                self.render_line(j, line.as_mut_slice());
+                logger(j);
+                line
+            })
+            .collect();
 
         result
     }
