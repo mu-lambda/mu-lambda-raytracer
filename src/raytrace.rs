@@ -96,14 +96,14 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
 
     pub fn render<Logger>(&self, logger: Logger) -> Vec<Vec<RGB>>
     where
-        Logger: Fn(usize) -> () + Sync,
+        Logger: Fn(usize, usize) -> () + Sync,
     {
         (0..self.parameters.image_height)
             .into_par_iter()
             .map(|j| {
                 let mut line = vec![(0, 0, 0); self.parameters.image_width];
                 self.render_line(j, line.as_mut_slice());
-                logger(j);
+                logger(j, self.parameters.image_height);
                 line
             })
             .collect()

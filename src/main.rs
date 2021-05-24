@@ -15,7 +15,7 @@ use rand::Rng;
 use raytrace::RayTracer;
 use rngator::Rngator;
 use shapes::Sphere;
-use std::sync::atomic::{self, AtomicUsize};
+use std::sync::atomic::{self, AtomicIsize, AtomicUsize};
 use std::time::Instant;
 use vec::{Color, Point3, Vec3};
 
@@ -193,10 +193,16 @@ where
     // Render
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
-    let remaining_count = AtomicUsize::new(parameters.render.image_height);
+    let remaining_count = AtomicIsize::new(-1);
     let rt = RayTracer::new_with_rng(&cam, world.as_ref(), parameters.render, rngator);
     let last_logged = AtomicUsize::new(0);
-    let image = rt.render(|_| {
+    let image = rt.render(|_, total| {
+        let _ = remaining_count.compare_exchange(
+            -1,
+            total as isize,
+            atomic::Ordering::Relaxed,
+            atomic::Ordering::Relaxed,
+        );
         let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed) - 1;
         if rem_lines == 0 {
             eprint!("\r{:50}", "Done!");
