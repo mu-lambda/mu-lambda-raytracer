@@ -30,14 +30,10 @@ impl AABB {
         let mut tmin = tmin;
         let mut tmax = tmax;
         for a in 0..3 {
-            let inv_d = 1.0 / r.dir.e[a];
-            let mut t0 = (self.minimum.e[a] - r.orig.e[a]) * inv_d;
-            let mut t1 = (self.maximum.e[a] - r.orig.e[a]) * inv_d;
-            if t1 < t0 {
-                std::mem::swap(&mut t0, &mut t1);
-            }
-            tmin = if t0 > tmin { t0 } else { tmin };
-            tmax = if t1 < tmax { t1 } else { tmax };
+            let t0 = (self.minimum.e[a] - r.orig.e[a]) / r.dir.e[a];
+            let t1 = (self.maximum.e[a] - r.orig.e[a]) / r.dir.e[a];
+            tmin = t0.min(t1).max(tmin);
+            tmax = t0.max(t1).min(tmax);
             if tmax <= tmin {
                 return false;
             }
