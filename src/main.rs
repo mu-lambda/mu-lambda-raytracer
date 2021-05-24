@@ -14,7 +14,7 @@ use clap::{App, Arg, ArgMatches};
 use hittable::Hittable;
 use raytrace::RayTracer;
 use rngator::Rngator;
-use std::sync::atomic::{self, AtomicUsize};
+use std::sync::atomic::{self, AtomicUsize, Ordering};
 use std::time::Instant;
 use vec::{Point3, Vec3};
 
@@ -159,25 +159,25 @@ where
         let _ = remaining_count.compare_exchange(
             usize::max_value(),
             total,
-            atomic::Ordering::Relaxed,
-            atomic::Ordering::Relaxed,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
         );
-        let rem_lines = remaining_count.fetch_sub(1, atomic::Ordering::Relaxed) - 1;
-        if rem_lines == 0 {
+        let remaining = remaining_count.fetch_sub(1, Ordering::Relaxed) - 1;
+        if remaining == 0 {
             eprint!("\r{:50}", "Done!");
             return;
         }
         let elapsed = start_time.elapsed().as_millis() as usize;
-        let ll = last_logged.load(atomic::Ordering::Relaxed);
+        let ll = last_logged.load(Ordering::Relaxed);
         if ll < elapsed && elapsed - ll > 300 {
             match last_logged.compare_exchange_weak(
                 ll,
                 elapsed,
-                atomic::Ordering::Relaxed,
-                atomic::Ordering::Relaxed,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
             ) {
                 Err(_) => return,
-                Ok(_) => eprint!("\rRemaining: {:3}%  ", rem_lines * 100 / total),
+                Ok(_) => eprint!("\rRemaining: {:3}%  ", remaining * 100 / total),
             }
         }
     });
