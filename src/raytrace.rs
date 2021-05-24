@@ -72,6 +72,22 @@ impl<'a> RayTracer<'a> {
         }
     }
 
+    pub fn render<Logger>(&self, logger: Logger) -> Vec<Vec<RGB>>
+    where
+        Logger: Fn(usize) -> (),
+    {
+        let mut result = Vec::with_capacity(self.parameters.image_height);
+
+        for j in 0..self.parameters.image_height {
+            let mut line = vec![(0, 0, 0); self.parameters.image_width];
+            self.render_line(j, line.as_mut_slice());
+            result.push(line);
+            logger(j);
+        }
+
+        result
+    }
+
     pub fn render_pixel(&self, i: usize, j: usize) -> RGB {
         let mut rng = rand::thread_rng();
         let mut pixel_color = Color::ZERO;

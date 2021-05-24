@@ -185,19 +185,16 @@ fn main() {
 
     // Render
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
-    let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
-    let mut line = vec![(0, 0, 0); parameters.render.image_width];
-
     let start_time = Instant::now();
-    for j in (0..parameters.render.image_height).rev() {
-        eprint!("\rScanlines remaining: {}    ", j);
-        io::stderr().flush().unwrap();
-        rt.render_line(j, line.as_mut_slice());
 
-        for (r, g, b) in line.iter() {
+    let rt = RayTracer::new(&cam, world.as_ref(), parameters.render);
+    let image = rt.render(|j| {
+        eprint!("\rScanlines remaining: {}", parameters.render.image_height - j);
+    });
+    eprintln!("\nRendered in {:.3}s", start_time.elapsed().as_secs_f32());
+    for j in (0..parameters.render.image_height).rev() {
+        for (r, g, b) in image[j].iter() {
             println!("{} {} {}", r, g, b);
         }
     }
-    let elapsed = start_time.elapsed();
-    eprintln!("\nRendered in {:.3}s", elapsed.as_secs_f32());
 }
