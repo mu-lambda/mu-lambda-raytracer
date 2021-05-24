@@ -5,6 +5,7 @@ pub mod materials;
 pub mod raytrace;
 pub mod rngator;
 pub mod shapes;
+pub mod textures;
 pub mod vec;
 pub mod worlds;
 

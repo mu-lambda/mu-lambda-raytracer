@@ -39,6 +39,19 @@ impl<T: Material> Sphere<T> {
     }
 }
 
+fn sphere_uv(normal: &Vec3) -> (f64, f64) {
+    // normal: a given point on the sphere of radius one, centered at the origin.
+    // u: returned value [0,1] of angle around the Y axis from X=-1.
+    // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+    //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+    //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+    //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+    let theta = (-normal.y()).acos();
+    let phi = (-normal.z()).atan2(normal.x()) + std::f64::consts::PI;
+
+    (phi / (2.0 * std::f64::consts::PI), theta / std::f64::consts::PI)
+}
+
 impl<T: Material + Sync> Hittable for Sphere<T> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let oc = &r.orig - &self.center;
@@ -61,7 +74,8 @@ impl<T: Material + Sync> Hittable for Sphere<T> {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        Some(Hit::new_with_face_normal(&p, t, &normal, r, &self.material))
+        let (u, v) = sphere_uv(&normal);
+        Some(Hit::new_with_face_normal(&p, t, u, v, &normal, r, &self.material))
     }
 }
 
@@ -69,5 +83,21 @@ impl<T: Material + Sync> Bounded for Sphere<T> {
     fn bounding_box(&self) -> AABB {
         let rad_v = Vec3::new(self.radius, self.radius, self.radius);
         AABB::new(self.center - rad_v, self.center + rad_v)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sphere_uv() {
+        assert_eq!((0.5, 0.5), sphere_uv(&Vec3::new(1.0, 0.0, 0.0)));
+        assert_eq!((0.5, 1.0), sphere_uv(&Vec3::new(0.0, 1.0, 0.0)));
+        assert_eq!((0.25, 0.5), sphere_uv(&Vec3::new(0.0, 0.0, 1.0)));
+
+        assert_eq!((0.0, 0.5), sphere_uv(&Vec3::new(-1.0, 0.0, 0.0)));
+        assert_eq!((0.5, 0.0), sphere_uv(&Vec3::new(0.0, -1.0, 0.0)));
+        assert_eq!((0.75, 0.5), sphere_uv(&Vec3::new(0.0, 0.0, -1.0)));
     }
 }

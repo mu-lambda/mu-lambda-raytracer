@@ -1,4 +1,5 @@
 use crate::hittable;
+use crate::textures::Texture;
 use crate::vec::{dot, unit_vector, Color, Ray, Vec3};
 use rand::Rng;
 
@@ -12,17 +13,17 @@ pub trait Material {
 }
 
 #[derive(Clone)]
-pub struct Lambertian {
-    pub albedo: Color,
+pub struct Lambertian<T: Texture> {
+    pub albedo: T,
 }
 
-impl Lambertian {
-    pub fn new(albedo: Color) -> Lambertian {
+impl<T: Texture> Lambertian<T> {
+    pub fn new(albedo: T) -> Lambertian<T> {
         Lambertian { albedo }
     }
 }
 
-impl Material for Lambertian {
+impl<T: Texture> Material for Lambertian<T> {
     fn scatter(
         &self,
         _ray: &Ray,
@@ -33,7 +34,8 @@ impl Material for Lambertian {
         if scatter_direction.near_zero() {
             scatter_direction = h.normal;
         }
-        return Some((self.albedo, Ray::new(h.p, scatter_direction)));
+        let attenuation = self.albedo.value(h.u, h.v, h.p);
+        return Some((attenuation, Ray::new(h.p, scatter_direction)));
     }
 }
 

@@ -8,6 +8,8 @@ pub struct Hit<'a> {
     pub p: Point3,
     pub normal: Vec3,
     pub t: f64,
+    pub u: f64,
+    pub v: f64,
     pub front_face: bool,
     pub material: &'a dyn Material,
 }
@@ -16,13 +18,15 @@ impl<'a> Hit<'a> {
     pub fn new_with_face_normal(
         p: &Point3,
         t: f64,
+        u: f64,
+        v: f64,
         outward_normal: &Vec3,
         r: &Ray,
         material: &'a dyn Material,
     ) -> Hit<'a> {
         let front_face = dot(r.dir, *outward_normal) < 0.0;
         let normal = if front_face { *outward_normal } else { -outward_normal };
-        return Hit { p: *p, normal, t, front_face, material };
+        return Hit { p: *p, normal, t, u, v, front_face, material };
     }
 }
 
