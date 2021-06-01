@@ -3,3 +3,4 @@
 *.swp
 test.ppm
 Session.vim
+.DS_Store
