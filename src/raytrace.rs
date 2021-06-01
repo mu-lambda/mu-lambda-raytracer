@@ -84,13 +84,13 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
         RayTracer { camera, world, parameters, rng }
     }
 
-    pub fn render_line(&self, j: usize, result: &mut [RGB]) {
+    pub fn render_line(&self, j: usize, result: &mut [RGB], rng: &mut dyn rand::RngCore) {
         if result.len() != self.parameters.image_width {
             panic!()
         }
 
         for i in 0..self.parameters.image_width {
-            result[i] = self.render_pixel(i, j)
+            result[i] = self.render_pixel(i, j, rng)
         }
     }
 
@@ -101,17 +101,17 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
         (0..self.parameters.image_height)
             .into_par_iter()
             .map(|j| {
+                let mut rng_box = self.rng.rng();
+                let rng = rng_box.as_mut();
                 let mut line = vec![(0, 0, 0); self.parameters.image_width];
-                self.render_line(j, line.as_mut_slice());
+                self.render_line(j, line.as_mut_slice(), rng);
                 logger(j, self.parameters.image_height);
                 line
             })
             .collect()
     }
 
-    pub fn render_pixel(&self, i: usize, j: usize) -> RGB {
-        let mut rng_box = self.rng.rng();
-        let rng = rng_box.as_mut();
+    pub fn render_pixel(&self, i: usize, j: usize, rng: &mut dyn rand::RngCore) -> RGB {
         let mut pixel_color = Color::ZERO;
         for _ in 0..self.parameters.samples_per_pixel {
             let u =
