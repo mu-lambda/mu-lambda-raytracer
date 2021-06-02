@@ -34,6 +34,19 @@ impl Background for GradientBackground {
     }
 }
 
+pub struct BlackBackground {}
+impl BlackBackground {
+    pub fn new() -> BlackBackground {
+        BlackBackground {}
+    }
+}
+
+impl Background for BlackBackground {
+    fn color(&self, ray: &Ray) -> Color {
+        Color::ZERO
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct RenderingParams {
     pub samples_per_pixel: i32,
@@ -139,7 +152,7 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
                     return attenuation * self.ray_color(&scattered, world, depth - 1, rng);
                 }
                 None => {
-                    return Color::ZERO;
+                    return h.material.emit(h.u, h.v, h.p);
                 }
             },
             None => self.background.color(ray),

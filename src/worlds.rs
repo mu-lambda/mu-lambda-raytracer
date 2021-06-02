@@ -1,8 +1,8 @@
 use crate::bhv;
 use crate::hittable::{Hittable, HittableList};
-use crate::materials::{Dielectric, Lambertian, Metal};
-use crate::raytrace::{Background, GradientBackground};
-use crate::shapes::Sphere;
+use crate::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
+use crate::raytrace::{Background, BlackBackground, GradientBackground};
+use crate::shapes::{Sphere, XYRect};
 use crate::textures;
 use crate::textures::{NoiseTexture, SolidColor};
 use crate::vec::{Color, Point3};
@@ -222,6 +222,44 @@ impl World for TwoSpheres {
     }
 }
 
+struct SimpleLight {}
+
+impl World for SimpleLight {
+    fn name(&self) -> &'static str {
+        "simple_light"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(BlackBackground::new())
+    }
+
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(20.0, 3.0, 6.0),
+            lookat: Point3::new(0.0, 2.0, 0.0),
+            field_of_view: 20.0,
+        }
+    }
+
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+        let mut shapes = HittableList::new();
+        let pertext = NoiseTexture::new(4.0, rng);
+        shapes.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(pertext)));
+        shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
+
+        let difflight = DiffuseLight::new(SolidColor::new(4.0, 4.0, 4.0));
+        shapes.add(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, difflight));
+        shapes.add(Sphere::new(Point3::new(0.0, 6.0, 0.0), 1.0, difflight));
+
+        Box::new(shapes)
+    }
+}
+
 pub fn worlds() -> Vec<Box<dyn World>> {
-    vec![Box::new(Simple {}), Box::new(Random {}), Box::new(RandomChk {}), Box::new(TwoSpheres {})]
+    vec![
+        Box::new(Simple {}),
+        Box::new(Random {}),
+        Box::new(RandomChk {}),
+        Box::new(TwoSpheres {}),
+        Box::new(SimpleLight {}),
+    ]
 }

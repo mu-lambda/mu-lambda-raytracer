@@ -1,6 +1,6 @@
 use crate::hittable;
 use crate::textures::Texture;
-use crate::vec::{Color, Ray, Vec3};
+use crate::vec::{Color, Point3, Ray, Vec3};
 use rand::Rng;
 
 pub trait Material {
@@ -10,6 +10,10 @@ pub trait Material {
         h: &hittable::Hit,
         rng: &mut dyn rand::RngCore,
     ) -> Option<(Color, Ray)>;
+
+    fn emit(&self, _u: f64, _v: f64, _p: Point3) -> Color {
+        Color::ZERO
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -121,5 +125,31 @@ impl Material for Dielectric {
         };
 
         return Some((attenuation, Ray::new(h.p, direction)));
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct DiffuseLight<T: Texture> {
+    texture: T,
+}
+
+impl<T: Texture> DiffuseLight<T> {
+    pub fn new(texture: T) -> DiffuseLight<T> {
+        DiffuseLight { texture }
+    }
+}
+
+impl<T: Texture> Material for DiffuseLight<T> {
+    fn scatter(
+        &self,
+        _: &Ray,
+        _: &hittable::Hit,
+        _: &mut dyn rand::RngCore,
+    ) -> Option<(Color, Ray)> {
+        None
+    }
+
+    fn emit(&self, u: f64, v: f64, p: Point3) -> Color {
+        self.texture.value(u, v, p)
     }
 }
