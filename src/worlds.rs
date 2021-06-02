@@ -3,7 +3,7 @@ use crate::hittable::{Hittable, HittableList};
 use crate::materials::{Dielectric, Lambertian, Metal};
 use crate::shapes::Sphere;
 use crate::textures;
-use crate::textures::SolidColor;
+use crate::textures::{NoiseTexture, SolidColor};
 use crate::vec::{Color, Point3};
 use rand::Rng;
 
@@ -197,12 +197,11 @@ impl World for TwoSpheres {
         }
     }
 
-    fn build(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut shapes = HittableList::new();
-        let checker =
-            textures::Checker::new(SolidColor::new(0.2, 0.3, 0.1), SolidColor::new(0.9, 0.9, 0.9));
-        shapes.add(Sphere::new(Point3::new(0.0, -10.0, 0.0), 10.0, Lambertian::new(checker)));
-        shapes.add(Sphere::new(Point3::new(0.0, 10.0, 0.0), 10.0, Lambertian::new(checker)));
+        let pertext = NoiseTexture::new(4.0, rng);
+        shapes.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(pertext)));
+        shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
 
         Box::new(shapes)
     }
