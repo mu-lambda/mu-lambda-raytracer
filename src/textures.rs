@@ -56,6 +56,7 @@ struct Perlin {
     perm_x: [usize; POINT_COUNT],
     perm_y: [usize; POINT_COUNT],
     perm_z: [usize; POINT_COUNT],
+    turbulence_depth: i32,
 }
 
 impl Perlin {
@@ -69,7 +70,22 @@ impl Perlin {
             perm_x: Perlin::permute(rng),
             perm_y: Perlin::permute(rng),
             perm_z: Perlin::permute(rng),
+            turbulence_depth: 7,
         }
+    }
+
+    fn turbulence(&self, p: &Point3) -> f64 {
+        let mut accum = 0.0f64;
+        let mut temp_p = *p;
+        let mut weight = 1.0;
+
+        for _ in 0..self.turbulence_depth {
+            accum += weight * self.noise(&temp_p);
+            weight *= 0.5;
+            temp_p = 2.0 * temp_p;
+        }
+
+        accum.abs()
     }
 
     fn noise(&self, p: &Point3) -> f64 {
@@ -148,6 +164,6 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f64, _v: f64, p: Point3) -> Color {
-        Color::ONE * 0.5 * (1.0 + self.noise.noise(&(self.scale * p)))
+        Color::ONE * 0.5 * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(&p)).sin())
     }
 }
