@@ -1,4 +1,4 @@
-use crate::vec::{dot, unit_vector, Color, Point3, Vec3};
+use crate::vec::{dot, Color, Point3, Vec3};
 use rand::Rng;
 
 pub trait Texture: Sync + Copy {
@@ -63,7 +63,7 @@ impl Perlin {
     pub fn new(rng: &mut dyn rand::RngCore) -> Perlin {
         let mut ranvec: [Vec3; POINT_COUNT] = [Vec3::ZERO; POINT_COUNT];
         for i in 0..POINT_COUNT {
-            ranvec[i] = unit_vector(&Vec3::random(-1.0, 1.0, rng));
+            ranvec[i] = Vec3::random(-1.0, 1.0, rng).unit();
         }
         Perlin {
             ranvec,

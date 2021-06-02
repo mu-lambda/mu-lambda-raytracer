@@ -30,7 +30,7 @@ impl Vec3 {
     }
 
     pub fn random_unit_vector(r: &mut dyn rand::RngCore) -> Vec3 {
-        unit_vector(&Vec3::random_in_unit_sphere(r))
+        Vec3::random_in_unit_sphere(r).unit()
     }
 
     pub fn random_in_hemisphere(normal: &Vec3, r: &mut dyn rand::RngCore) -> Vec3 {
@@ -62,6 +62,10 @@ impl Vec3 {
 
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
+    }
+
+    pub fn unit(&self) -> Vec3 {
+        self / self.length()
     }
 
     pub fn length_squared(&self) -> f64 {
@@ -195,10 +199,6 @@ impl ops::Mul<Vec3> for f64 {
 
 pub type Point3 = Vec3;
 pub type Color = Vec3;
-
-pub fn unit_vector(v: &Vec3) -> Vec3 {
-    v / v.length()
-}
 
 pub fn dot(u: Vec3, v: Vec3) -> f64 {
     return u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2];

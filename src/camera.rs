@@ -1,4 +1,4 @@
-use crate::vec::{cross, unit_vector, Point3, Ray, Vec3};
+use crate::vec::{cross, Point3, Ray, Vec3};
 
 pub struct Camera {
     origin: Point3,
@@ -26,8 +26,8 @@ impl Camera {
         let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;
 
-        let w = unit_vector(&(lookfrom - lookat));
-        let u = unit_vector(&cross(vup, w));
+        let w = (lookfrom - lookat).unit();
+        let u = cross(vup, w).unit();
         let v = cross(w, u);
 
         let origin = lookfrom;

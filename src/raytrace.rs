@@ -1,7 +1,7 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::rngator;
-use crate::vec::{unit_vector, Color, Ray};
+use crate::vec::{Color, Ray};
 use rand::Rng;
 use rayon::prelude::*;
 
@@ -24,7 +24,7 @@ where
         None => {
             let white: Color = Color::new(1.0f64, 1.0f64, 1.0f64);
             let blueish: Color = Color::new(0.5f64, 0.7f64, 1.0f64);
-            let unit_direction = unit_vector(&ray.dir);
+            let unit_direction = ray.dir.unit();
             let t = 0.5f64 * (unit_direction.y() + 1.0f64);
             return (1.0 - t) * white + t * blueish;
         }

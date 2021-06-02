@@ -1,6 +1,6 @@
 use crate::hittable;
 use crate::textures::Texture;
-use crate::vec::{dot, unit_vector, Color, Ray, Vec3};
+use crate::vec::{dot, Color, Ray, Vec3};
 use rand::Rng;
 
 pub trait Material {
@@ -61,7 +61,7 @@ impl Material for Metal {
         h: &hittable::Hit,
         rng: &mut dyn rand::RngCore,
     ) -> Option<(Color, Ray)> {
-        let reflected = reflect(unit_vector(&ray.dir), h.normal);
+        let reflected = reflect(ray.dir.unit(), h.normal);
         let scattered = Ray::new(h.p, reflected + self.fuzz * Vec3::random_in_unit_sphere(rng));
         if dot(scattered.dir, h.normal) > 0.0 {
             Some((self.albedo, scattered))
@@ -107,7 +107,7 @@ impl Material for Dielectric {
         let refraction_ratio =
             if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
 
-        let unit_direction = unit_vector(&ray.dir);
+        let unit_direction = ray.dir.unit();
         let cos_theta = dot(-unit_direction, h.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
