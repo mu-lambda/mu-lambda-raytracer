@@ -2,7 +2,7 @@ use crate::bhv;
 use crate::hittable::{Hittable, HittableList};
 use crate::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
 use crate::raytrace::{Background, BlackBackground, GradientBackground};
-use crate::shapes::{Sphere, XYRect};
+use crate::shapes::{Sphere, XYRect, XZRect, YZRect};
 use crate::textures;
 use crate::textures::{NoiseTexture, SolidColor};
 use crate::vec::{Color, Point3};
@@ -254,6 +254,44 @@ impl World for SimpleLight {
     }
 }
 
+struct CornellBox {}
+
+impl World for CornellBox {
+    fn name(&self) -> &'static str {
+        "cornell_box"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(BlackBackground::new())
+    }
+
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(278.0, 278.0, -800.0),
+            lookat: Point3::new(278.0, 278.0, 0.0),
+            field_of_view: 40.0,
+        }
+    }
+
+    fn build(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+        let mut shapes = HittableList::new();
+        let red = Lambertian::new(SolidColor::new(0.65, 0.05, 0.05));
+        let white = Lambertian::new(SolidColor::new(0.73, 0.73, 0.73));
+        let green = Lambertian::new(SolidColor::new(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(SolidColor::new(15.0, 15.0, 15.0));
+
+        shapes.add(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green));
+        shapes.add(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red));
+
+        shapes.add(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0, light));
+
+        shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white));
+        shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
+        shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
+
+        Box::new(shapes)
+    }
+}
+
 pub fn worlds() -> Vec<Box<dyn World>> {
     vec![
         Box::new(Simple {}),
@@ -261,5 +299,6 @@ pub fn worlds() -> Vec<Box<dyn World>> {
         Box::new(RandomChk {}),
         Box::new(TwoSpheres {}),
         Box::new(SimpleLight {}),
+        Box::new(CornellBox {}),
     ]
 }

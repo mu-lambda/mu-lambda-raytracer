@@ -1,3 +1,4 @@
+mod aarects;
 pub mod bhv;
 pub mod camera;
 pub mod hittable;
