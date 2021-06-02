@@ -72,6 +72,14 @@ impl Vec3 {
         return self.e[0] * v.e[0] + self.e[1] * v.e[1] + self.e[2] * v.e[2];
     }
 
+    pub fn cross(&self, v: Vec3) -> Vec3 {
+        Vec3::new(
+            self.e[1] * v.e[2] - self.e[2] * v.e[1],
+            self.e[2] * v.e[0] - self.e[0] * v.e[2],
+            self.e[0] * v.e[1] - self.e[1] * v.e[0],
+        )
+    }
+
     pub fn length_squared(&self) -> f64 {
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
     }
@@ -203,14 +211,6 @@ impl ops::Mul<Vec3> for f64 {
 
 pub type Point3 = Vec3;
 pub type Color = Vec3;
-
-pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
-    Vec3::new(
-        u.e[1] * v.e[2] - u.e[2] * v.e[1],
-        u.e[2] * v.e[0] - u.e[0] * v.e[2],
-        u.e[0] * v.e[1] - u.e[1] * v.e[0],
-    )
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Ray {
