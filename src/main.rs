@@ -11,7 +11,6 @@ pub mod worlds;
 
 use camera::Camera;
 use clap::{App, Arg, ArgMatches};
-use hittable::Hittable;
 use raytrace::RayTracer;
 use rngator::Rngator;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -133,7 +132,8 @@ where
     let mut rng = rngator.rng();
 
     // World
-    let world: Box<dyn Hittable> = parameters.world.build(&mut rng);
+    let world = parameters.world.build(&mut rng);
+    let background = parameters.world.background();
 
     // Camera
     let cam = Camera::new(
@@ -150,7 +150,6 @@ where
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(usize::MAX);
-    let background = parameters.world.background();
     let rt = RayTracer::new_with_rng(
         &cam,
         world.as_ref(),
