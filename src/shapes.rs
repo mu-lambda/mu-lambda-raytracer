@@ -116,9 +116,9 @@ pub struct XZRect<T: Material> {
 }
 
 impl<T: Material> XZRect<T> {
-    pub fn new(x0: f64, x1: f64, z0: f64, z1: f64, y: f64, material: T) -> XYRect<T> {
+    pub fn new(x0: f64, x1: f64, z0: f64, z1: f64, y: f64, material: T) -> XZRect<T> {
         let r = AARect::new(Axis::X, x0, x1, Axis::Z, z0, z1, y);
-        XYRect { r, material }
+        XZRect { r, material }
     }
 }
 
@@ -140,9 +140,9 @@ pub struct YZRect<T: Material> {
 }
 
 impl<T: Material> YZRect<T> {
-    pub fn new(y0: f64, y1: f64, z0: f64, z1: f64, x: f64, material: T) -> XYRect<T> {
+    pub fn new(y0: f64, y1: f64, z0: f64, z1: f64, x: f64, material: T) -> YZRect<T> {
         let r = AARect::new(Axis::Y, y0, y1, Axis::Z, z0, z1, x);
-        XYRect { r, material }
+        YZRect { r, material }
     }
 }
 
