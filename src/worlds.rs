@@ -1,6 +1,7 @@
 use crate::bhv;
 use crate::hittable::{Hittable, HittableList};
 use crate::materials::{Dielectric, Lambertian, Metal};
+use crate::raytrace::{Background, GradientBackground};
 use crate::shapes::Sphere;
 use crate::textures;
 use crate::textures::{NoiseTexture, SolidColor};
@@ -10,6 +11,7 @@ use rand::Rng;
 pub trait World {
     fn name(&self) -> &'static str;
     fn camera(&self) -> WorldCamera;
+    fn background(&self) -> Box<dyn Background>;
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable>;
 }
 
@@ -24,6 +26,10 @@ struct Simple {}
 impl World for Simple {
     fn name(&self) -> &'static str {
         "simple"
+    }
+
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(GradientBackground::default())
     }
 
     fn camera(&self) -> WorldCamera {
@@ -63,6 +69,9 @@ struct Random {}
 impl World for Random {
     fn name(&self) -> &'static str {
         "random"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(GradientBackground::default())
     }
     fn camera(&self) -> WorldCamera {
         WorldCamera {
@@ -122,6 +131,9 @@ struct RandomChk {}
 impl World for RandomChk {
     fn name(&self) -> &'static str {
         "random_chk"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(GradientBackground::default())
     }
 
     fn camera(&self) -> WorldCamera {
@@ -187,6 +199,9 @@ struct TwoSpheres {}
 impl World for TwoSpheres {
     fn name(&self) -> &'static str {
         "two_spheres"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(GradientBackground::default())
     }
 
     fn camera(&self) -> WorldCamera {

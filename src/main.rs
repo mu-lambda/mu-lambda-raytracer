@@ -150,7 +150,14 @@ where
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(usize::MAX);
-    let rt = RayTracer::new_with_rng(&cam, world.as_ref(), parameters.render, rngator);
+    let background = parameters.world.background();
+    let rt = RayTracer::new_with_rng(
+        &cam,
+        world.as_ref(),
+        background.as_ref(),
+        parameters.render,
+        rngator,
+    );
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|_, total| {
         const R: Ordering = Ordering::Relaxed;

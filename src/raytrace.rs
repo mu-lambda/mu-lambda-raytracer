@@ -5,29 +5,32 @@ use crate::vec::{Color, Ray};
 use rand::Rng;
 use rayon::prelude::*;
 
-pub fn ray_color<R>(ray: &Ray, world: &dyn Hittable, depth: i32, rng: &mut R) -> Color
-where
-    R: rand::RngCore,
-{
-    if depth <= 0 {
-        return Color::ZERO;
+pub trait Background: Sync {
+    fn color(&self, ray: &Ray) -> Color;
+}
+
+pub struct GradientBackground {
+    top: Color,
+    bottom: Color,
+}
+
+impl GradientBackground {
+    pub fn new(top: Color, bottom: Color) -> GradientBackground {
+        GradientBackground { top, bottom }
     }
-    match world.hit(ray, 0.001, f64::INFINITY) {
-        Some(h) => match h.material.scatter(ray, &h, rng) {
-            Some((attenuation, scattered)) => {
-                return attenuation * ray_color(&scattered, world, depth - 1, rng);
-            }
-            None => {
-                return Color::ZERO;
-            }
-        },
-        None => {
-            let white: Color = Color::new(1.0f64, 1.0f64, 1.0f64);
-            let blueish: Color = Color::new(0.5f64, 0.7f64, 1.0f64);
-            let unit_direction = ray.dir.unit();
-            let t = 0.5f64 * (unit_direction.y() + 1.0f64);
-            return (1.0 - t) * white + t * blueish;
-        }
+    pub fn default() -> GradientBackground {
+        let white: Color = Color::new(1.0f64, 1.0f64, 1.0f64);
+        let blueish: Color = Color::new(0.5f64, 0.7f64, 1.0f64);
+
+        GradientBackground::new(blueish, white)
+    }
+}
+
+impl Background for GradientBackground {
+    fn color(&self, ray: &Ray) -> Color {
+        let unit_direction = ray.dir.unit();
+        let t = 0.5f64 * (unit_direction.y() + 1.0f64);
+        return (1.0 - t) * self.bottom + t * self.top;
     }
 }
 
@@ -58,6 +61,7 @@ where
 {
     camera: &'a Camera,
     world: &'a dyn Hittable,
+    background: &'a dyn Background,
     parameters: RenderingParams,
     rng: T,
 }
@@ -66,9 +70,10 @@ impl<'a> RayTracer<'a> {
     pub fn new(
         camera: &'a Camera,
         world: &'a dyn Hittable,
+        background: &'a dyn Background,
         parameters: RenderingParams,
     ) -> RayTracer<'a, rngator::ThreadRngator> {
-        RayTracer::new_with_rng(camera, world, parameters, rngator::ThreadRngator {})
+        RayTracer::new_with_rng(camera, world, background, parameters, rngator::ThreadRngator {})
     }
 }
 
@@ -76,10 +81,11 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
     pub fn new_with_rng(
         camera: &'a Camera,
         world: &'a dyn Hittable,
+        background: &'a dyn Background,
         parameters: RenderingParams,
         rng: T,
     ) -> RayTracer<'a, T> {
-        RayTracer { camera, world, parameters, rng }
+        RayTracer { camera, world, background, parameters, rng }
     }
 
     pub fn render_line(&self, j: usize, result: &mut [RGB], rng: &mut T::R) {
@@ -116,9 +122,27 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
             let v = ((j as f64) + rng.gen_range(0.0..1.0))
                 / (self.parameters.image_height as f64 - 1.0);
             let r = self.camera.get_ray(u, v, rng);
-            pixel_color = pixel_color + ray_color(&r, self.world, self.parameters.max_depth, rng);
+            pixel_color =
+                pixel_color + self.ray_color(&r, self.world, self.parameters.max_depth, rng);
         }
 
         to_rgb(&pixel_color, self.parameters.samples_per_pixel)
+    }
+
+    fn ray_color(&self, ray: &Ray, world: &dyn Hittable, depth: i32, rng: &mut T::R) -> Color {
+        if depth <= 0 {
+            return Color::ZERO;
+        }
+        match world.hit(ray, 0.001, f64::INFINITY) {
+            Some(h) => match h.material.scatter(ray, &h, rng) {
+                Some((attenuation, scattered)) => {
+                    return attenuation * self.ray_color(&scattered, world, depth - 1, rng);
+                }
+                None => {
+                    return Color::ZERO;
+                }
+            },
+            None => self.background.color(ray),
+        }
     }
 }
