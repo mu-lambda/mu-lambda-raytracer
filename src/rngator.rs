@@ -2,14 +2,16 @@ use rand::SeedableRng;
 use std::sync::atomic::AtomicU64;
 
 pub trait Rngator: Sync {
-    fn rng(&self) -> Box<dyn rand::RngCore>;
+    type R: rand::RngCore;
+    fn rng(&self) -> Self::R;
 }
 
 pub struct ThreadRngator {}
 
 impl Rngator for ThreadRngator {
-    fn rng(&self) -> Box<dyn rand::RngCore> {
-        Box::new(rand::thread_rng())
+    type R = rand::rngs::ThreadRng;
+    fn rng(&self) -> rand::rngs::ThreadRng {
+        rand::thread_rng()
     }
 }
 
@@ -24,8 +26,9 @@ impl SeedableRngator {
 }
 
 impl Rngator for SeedableRngator {
-    fn rng(&self) -> Box<dyn rand::RngCore> {
+    type R = rand_pcg::Pcg64;
+    fn rng(&self) -> rand_pcg::Pcg64 {
         let seed = self.seed.fetch_add(1, std::sync::atomic::Ordering::Release);
-        Box::new(rand_pcg::Pcg64::seed_from_u64(seed))
+        rand_pcg::Pcg64::seed_from_u64(seed)
     }
 }

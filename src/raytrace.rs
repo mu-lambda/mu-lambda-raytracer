@@ -5,12 +5,10 @@ use crate::vec::{unit_vector, Color, Ray};
 use rand::Rng;
 use rayon::prelude::*;
 
-pub fn ray_color(
-    ray: &Ray,
-    world: &dyn Hittable,
-    depth: i32,
-    rng: &mut dyn rand::RngCore,
-) -> Color {
+pub fn ray_color<R>(ray: &Ray, world: &dyn Hittable, depth: i32, rng: &mut R) -> Color
+where
+    R: rand::RngCore,
+{
     if depth <= 0 {
         return Color::ZERO;
     }
@@ -84,7 +82,7 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
         RayTracer { camera, world, parameters, rng }
     }
 
-    pub fn render_line(&self, j: usize, result: &mut [RGB], rng: &mut dyn rand::RngCore) {
+    pub fn render_line(&self, j: usize, result: &mut [RGB], rng: &mut T::R) {
         if result.len() != self.parameters.image_width {
             panic!()
         }
@@ -101,17 +99,16 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
         (0..self.parameters.image_height)
             .into_par_iter()
             .map(|j| {
-                let mut rng_box = self.rng.rng();
-                let rng = rng_box.as_mut();
+                let mut rng = self.rng.rng();
                 let mut line = vec![(0, 0, 0); self.parameters.image_width];
-                self.render_line(j, line.as_mut_slice(), rng);
+                self.render_line(j, line.as_mut_slice(), &mut rng);
                 logger(j, self.parameters.image_height);
                 line
             })
             .collect()
     }
 
-    pub fn render_pixel(&self, i: usize, j: usize, rng: &mut dyn rand::RngCore) -> RGB {
+    pub fn render_pixel(&self, i: usize, j: usize, rng: &mut T::R) -> RGB {
         let mut pixel_color = Color::ZERO;
         for _ in 0..self.parameters.samples_per_pixel {
             let u =

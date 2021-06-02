@@ -130,11 +130,10 @@ fn do_it<T>(parameters: Parameters, rngator: T)
 where
     T: Rngator,
 {
-    let mut rng_box = rngator.rng();
-    let rng = rng_box.as_mut();
+    let mut rng = rngator.rng();
 
     // World
-    let world: Box<dyn Hittable> = parameters.world.build(rng);
+    let world: Box<dyn Hittable> = parameters.world.build(&mut rng);
 
     // Camera
     let cam = Camera::new(
