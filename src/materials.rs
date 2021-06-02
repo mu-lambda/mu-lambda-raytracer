@@ -1,6 +1,6 @@
 use crate::hittable;
 use crate::textures::Texture;
-use crate::vec::{dot, Color, Ray, Vec3};
+use crate::vec::{Color, Ray, Vec3};
 use rand::Rng;
 
 pub trait Material {
@@ -51,7 +51,7 @@ impl Metal {
 }
 
 fn reflect(v: Vec3, n: Vec3) -> Vec3 {
-    v - 2.0 * dot(v, n) * n
+    v - 2.0 * v.dot(n) * n
 }
 
 impl Material for Metal {
@@ -63,7 +63,7 @@ impl Material for Metal {
     ) -> Option<(Color, Ray)> {
         let reflected = reflect(ray.dir.unit(), h.normal);
         let scattered = Ray::new(h.p, reflected + self.fuzz * Vec3::random_in_unit_sphere(rng));
-        if dot(scattered.dir, h.normal) > 0.0 {
+        if scattered.dir.dot(h.normal) > 0.0 {
             Some((self.albedo, scattered))
         } else {
             None
@@ -72,7 +72,7 @@ impl Material for Metal {
 }
 
 fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
-    let cos_theta = dot(-uv, n).min(1.0);
+    let cos_theta = (-uv).dot(n).min(1.0);
     let r_out_perp = etai_over_etat * (uv + cos_theta * n);
     let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * n;
     r_out_perp + r_out_parallel
@@ -108,7 +108,7 @@ impl Material for Dielectric {
             if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
 
         let unit_direction = ray.dir.unit();
-        let cos_theta = dot(-unit_direction, h.normal).min(1.0);
+        let cos_theta = h.normal.dot(-unit_direction).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = refraction_ratio * sin_theta > 1.0;

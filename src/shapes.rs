@@ -1,7 +1,7 @@
 use crate::bhv::{Bounded, AABB};
 use crate::hittable::{Hit, Hittable};
 use crate::materials::Material;
-use crate::vec::{dot, Point3, Ray, Vec3};
+use crate::vec::{Point3, Ray, Vec3};
 
 pub struct Empty {}
 
@@ -56,7 +56,7 @@ impl<T: Material + Sync> Hittable for Sphere<T> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let oc = &r.orig - &self.center;
         let a = r.dir.length_squared();
-        let half_b = dot(oc, r.dir);
+        let half_b = oc.dot(r.dir);
         let c = oc.length_squared() - self.radius * self.radius;
         let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {

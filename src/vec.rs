@@ -35,7 +35,7 @@ impl Vec3 {
 
     pub fn random_in_hemisphere(normal: &Vec3, r: &mut dyn rand::RngCore) -> Vec3 {
         let in_unit_sphere = Vec3::random_in_unit_sphere(r);
-        if dot(in_unit_sphere, *normal) > 0.0 {
+        if normal.dot(in_unit_sphere) > 0.0 {
             return in_unit_sphere;
         } else {
             return -in_unit_sphere;
@@ -66,6 +66,10 @@ impl Vec3 {
 
     pub fn unit(&self) -> Vec3 {
         self / self.length()
+    }
+
+    pub fn dot(&self, v: Vec3) -> f64 {
+        return self.e[0] * v.e[0] + self.e[1] * v.e[1] + self.e[2] * v.e[2];
     }
 
     pub fn length_squared(&self) -> f64 {
@@ -199,10 +203,6 @@ impl ops::Mul<Vec3> for f64 {
 
 pub type Point3 = Vec3;
 pub type Color = Vec3;
-
-pub fn dot(u: Vec3, v: Vec3) -> f64 {
-    return u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2];
-}
 
 pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
     Vec3::new(

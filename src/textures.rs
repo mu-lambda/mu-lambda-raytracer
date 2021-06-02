@@ -1,4 +1,4 @@
-use crate::vec::{dot, Color, Point3, Vec3};
+use crate::vec::{Color, Point3, Vec3};
 use rand::Rng;
 
 pub trait Texture: Sync + Copy {
@@ -128,7 +128,7 @@ impl Perlin {
                     accum += ((i as f64) * uu + ((1 - i) as f64) * (1.0 - uu))
                         * ((j as f64) * vv + ((1 - j) as f64) * (1.0 - vv))
                         * ((k as f64) * ww + ((1 - k) as f64) * (1.0 - ww))
-                        * dot(weight, c[i][j][k]);
+                        * weight.dot(c[i][j][k]);
                 }
             }
         }

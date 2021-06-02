@@ -1,5 +1,5 @@
 use crate::materials::Material;
-use crate::vec::{dot, Point3, Ray, Vec3};
+use crate::vec::{Point3, Ray, Vec3};
 use std::option::Option;
 use std::vec::Vec;
 
@@ -24,7 +24,7 @@ impl<'a> Hit<'a> {
         r: &Ray,
         material: &'a dyn Material,
     ) -> Hit<'a> {
-        let front_face = dot(r.dir, *outward_normal) < 0.0;
+        let front_face = outward_normal.dot(r.dir) < 0.0;
         let normal = if front_face { *outward_normal } else { -outward_normal };
         return Hit { p: *p, normal, t, u, v, front_face, material };
     }
