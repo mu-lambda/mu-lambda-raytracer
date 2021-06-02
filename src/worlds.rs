@@ -2,7 +2,7 @@ use crate::bhv;
 use crate::hittable::{Hittable, HittableList};
 use crate::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
 use crate::raytrace::{Background, BlackBackground, GradientBackground};
-use crate::shapes::{Sphere, XYRect, XZRect, YZRect};
+use crate::shapes::{Block, Sphere, XYRect, XZRect, YZRect};
 use crate::textures;
 use crate::textures::{NoiseTexture, SolidColor};
 use crate::vec::{Color, Point3};
@@ -287,6 +287,17 @@ impl World for CornellBox {
         shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white));
         shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
         shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
+
+        shapes.add(Block::new(
+            Point3::new(130.0, 0.0, 65.0),
+            Point3::new(295.0, 165.0, 230.0),
+            white,
+        ));
+        shapes.add(Block::new(
+            Point3::new(265.0, 0.0, 295.0),
+            Point3::new(430.0, 330.0, 460.0),
+            white,
+        ));
 
         Box::new(shapes)
     }

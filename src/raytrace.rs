@@ -42,7 +42,7 @@ impl BlackBackground {
 }
 
 impl Background for BlackBackground {
-    fn color(&self, ray: &Ray) -> Color {
+    fn color(&self, _: &Ray) -> Color {
         Color::ZERO
     }
 }

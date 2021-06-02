@@ -1,6 +1,6 @@
 use crate::aarects::{AARect, Axis};
 use crate::bhv::{Bounded, AABB};
-use crate::hittable::{Hit, Hittable};
+use crate::hittable::{Hit, Hittable, HittableList};
 use crate::materials::Material;
 use crate::vec::{Point3, Ray, Vec3};
 
@@ -155,6 +155,40 @@ impl<T: Material + Sync> Hittable for YZRect<T> {
 impl<T: Material + Sync> Bounded for YZRect<T> {
     fn bounding_box(&self) -> AABB {
         self.r.bounding_box()
+    }
+}
+
+pub struct Block<'a> {
+    min: Point3,
+    max: Point3,
+    sides: HittableList<'a>,
+}
+
+impl<'a> Block<'a> {
+    pub fn new<T: Material + Sync + Copy + 'a>(p0: Point3, p1: Point3, material: T) -> Block<'a> {
+        let mut sides = HittableList::new();
+
+        sides.add(XYRect::new(p0.x(), p1.x(), p0.y(), p1.y(), p1.z(), material));
+        sides.add(XYRect::new(p0.x(), p1.x(), p0.y(), p1.y(), p0.z(), material));
+
+        sides.add(XZRect::new(p0.x(), p1.x(), p0.z(), p1.z(), p0.y(), material));
+        sides.add(XZRect::new(p0.x(), p1.x(), p0.z(), p1.z(), p1.y(), material));
+
+        sides.add(YZRect::new(p0.y(), p1.y(), p0.z(), p1.z(), p0.x(), material));
+        sides.add(YZRect::new(p0.y(), p1.y(), p0.z(), p1.z(), p1.x(), material));
+
+        Block { min: p0, max: p1, sides }
+    }
+}
+impl<'a> Hittable for Block<'a> {
+    fn hit(&self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit> {
+        self.sides.hit(r, tmin, tmax)
+    }
+}
+
+impl<'a> Bounded for Block<'a> {
+    fn bounding_box(&self) -> AABB {
+        AABB::new(self.min, self.max)
     }
 }
 
