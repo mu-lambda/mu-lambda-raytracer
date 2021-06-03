@@ -284,9 +284,10 @@ impl World for SimpleLight {
         ));
         shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
 
-        let difflight = DiffuseLight::new(SolidColor::new(4.0, 4.0, 4.0));
-        shapes.add(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, difflight.clone()));
-        shapes.add(Sphere::new(Point3::new(0.0, 6.0, 0.0), 1.0, difflight));
+        let difflight = DiffuseLight::new(SolidColor::new(0.0, 7.0, 0.0));
+        shapes.add(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, difflight));
+        let difflight = DiffuseLight::new(SolidColor::new(7.0, 0.0, 0.0));
+        shapes.add(Sphere::new(Point3::new(0.0, 6.0, 0.0), 1.5, difflight));
 
         Box::new(shapes)
     }
