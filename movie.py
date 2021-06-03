@@ -58,3 +58,5 @@ for i in range(0,1800):
     print("Frame {}: {}".format(i, c_delta))
     render_image(i, origin, add(origin,c_delta))
     p_delta = add(p_delta, (0, 0.5*grad, 0)) 
+
+# ffmpeg -r 30 -f image2 -i _movie/frame\%04d.png -vcodec libx264 -crf 25 test.mpg
