@@ -5,7 +5,7 @@ use crate::raytrace::{Background, BlackBackground, GradientBackground};
 use crate::shapes::{Block, Sphere, XYRect, XZRect, YZRect};
 use crate::textures;
 use crate::textures::{NoiseTexture, SolidColor};
-use crate::transforms;
+use crate::transforms::{self, Axis};
 use crate::vec::{Color, Point3, Vec3};
 use rand::Rng;
 
@@ -286,22 +286,26 @@ impl World for CornellBox {
         let red = Lambertian::new(SolidColor::new(0.65, 0.05, 0.05));
         let white = Lambertian::new(SolidColor::new(0.73, 0.73, 0.73));
         let green = Lambertian::new(SolidColor::new(0.12, 0.45, 0.15));
-        let light = DiffuseLight::new(SolidColor::new(15.0, 15.0, 15.0));
+        let light = DiffuseLight::new(SolidColor::new(7.0, 7.0, 7.0));
 
         shapes.add(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green));
         shapes.add(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red));
 
-        shapes.add(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0, light));
+        shapes.add(XZRect::new(113.0, 443.0, 127.0, 432.0, 554.0, light));
 
         shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white));
         shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
         shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
 
         let large_block = Block::new(Point3::ZERO, Point3::new(165.0, 330.0, 165.0), white);
-        shapes.add(transforms::Translate::new(large_block, Vec3::new(265.0, 0.0, 295.0)));
+        let large_block = transforms::Rotate::new(large_block, Axis::Y, 15.0);
+        let large_block = transforms::Translate::new(large_block, Vec3::new(265.0, 0.0, 295.0));
+        shapes.add(large_block);
 
         let small_block = Block::new(Point3::ZERO, Point3::new(165.0, 165.0, 165.0), white);
-        shapes.add(transforms::Translate::new(small_block, Vec3::new(130.0, 0.0, 65.0)));
+        let small_block = transforms::Rotate::new(small_block, Axis::Y, -18.0);
+        let small_block = transforms::Translate::new(small_block, Vec3::new(130.0, 0.0, 65.0));
+        shapes.add(small_block);
 
         Box::new(shapes)
     }

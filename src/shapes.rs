@@ -1,7 +1,8 @@
-use crate::aarects::{AARect, Axis};
+use crate::aarects::AARect;
 use crate::bhv::{Bounded, AABB};
 use crate::hittable::{Hit, Hittable, HittableList};
 use crate::materials::Material;
+use crate::transforms::Axis;
 use crate::vec::{Point3, Ray, Vec3};
 
 pub struct Empty {}

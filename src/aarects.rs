@@ -1,22 +1,8 @@
 use crate::bhv::AABB;
 use crate::hittable::Hit;
 use crate::materials::Material;
+use crate::transforms::{index, Axis};
 use crate::vec::{Point3, Ray, Vec3};
-
-#[derive(Clone, Copy)]
-pub enum Axis {
-    X,
-    Y,
-    Z,
-}
-
-fn index(a: Axis) -> usize {
-    match a {
-        Axis::X => 0,
-        Axis::Y => 1,
-        Axis::Z => 2,
-    }
-}
 
 fn other(a0: Axis, a1: Axis) -> Axis {
     match (a0, a1) {
