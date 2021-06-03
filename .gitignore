@@ -1,4 +1,5 @@
 /target
+/_movie
 *.rustfmt
 *.swp
 test.ppm
