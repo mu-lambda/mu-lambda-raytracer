@@ -5,7 +5,8 @@ use crate::raytrace::{Background, BlackBackground, GradientBackground};
 use crate::shapes::{Block, Sphere, XYRect, XZRect, YZRect};
 use crate::textures;
 use crate::textures::{NoiseTexture, SolidColor};
-use crate::vec::{Color, Point3};
+use crate::transforms;
+use crate::vec::{Color, Point3, Vec3};
 use rand::Rng;
 
 pub trait World {
@@ -296,16 +297,11 @@ impl World for CornellBox {
         shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
         shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
 
-        shapes.add(Block::new(
-            Point3::new(130.0, 0.0, 65.0),
-            Point3::new(295.0, 165.0, 230.0),
-            white,
-        ));
-        shapes.add(Block::new(
-            Point3::new(265.0, 0.0, 295.0),
-            Point3::new(430.0, 330.0, 460.0),
-            white,
-        ));
+        let large_block = Block::new(Point3::ZERO, Point3::new(165.0, 330.0, 165.0), white);
+        shapes.add(transforms::Translate::new(large_block, Vec3::new(265.0, 0.0, 295.0)));
+
+        let small_block = Block::new(Point3::ZERO, Point3::new(165.0, 165.0, 165.0), white);
+        shapes.add(transforms::Translate::new(small_block, Vec3::new(130.0, 0.0, 65.0)));
 
         Box::new(shapes)
     }

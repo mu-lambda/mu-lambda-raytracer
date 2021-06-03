@@ -21,7 +21,7 @@ impl Bounded for Empty {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Sphere<T: Material> {
     center: Point3,
     radius: f64,
@@ -87,7 +87,7 @@ impl<T: Material + Sync> Bounded for Sphere<T> {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct XYRect<T: Material> {
     r: AARect,
     material: T,
@@ -112,7 +112,7 @@ impl<T: Material + Sync> Bounded for XYRect<T> {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct XZRect<T: Material> {
     r: AARect,
     material: T,
@@ -137,7 +137,7 @@ impl<T: Material + Sync> Bounded for XZRect<T> {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct YZRect<T: Material> {
     r: AARect,
     material: T,

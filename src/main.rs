@@ -7,6 +7,7 @@ pub mod raytrace;
 pub mod rngator;
 pub mod shapes;
 pub mod textures;
+pub mod transforms;
 pub mod vec;
 pub mod worlds;
 
