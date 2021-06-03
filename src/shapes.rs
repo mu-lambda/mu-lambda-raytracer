@@ -21,6 +21,7 @@ impl Bounded for Empty {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Sphere<T: Material> {
     center: Point3,
     radius: f64,
@@ -86,6 +87,7 @@ impl<T: Material + Sync> Bounded for Sphere<T> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct XYRect<T: Material> {
     r: AARect,
     material: T,
@@ -110,6 +112,7 @@ impl<T: Material + Sync> Bounded for XYRect<T> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct XZRect<T: Material> {
     r: AARect,
     material: T,
@@ -134,6 +137,7 @@ impl<T: Material + Sync> Bounded for XZRect<T> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct YZRect<T: Material> {
     r: AARect,
     material: T,
@@ -165,7 +169,7 @@ pub struct Block<'a> {
 }
 
 impl<'a> Block<'a> {
-    pub fn new<T: Material + Sync + Copy + 'a>(p0: Point3, p1: Point3, material: T) -> Block<'a> {
+    pub fn new<T: Material + Copy + 'a>(p0: Point3, p1: Point3, material: T) -> Block<'a> {
         let mut sides = HittableList::new();
 
         sides.add(XYRect::new(p0.x(), p1.x(), p0.y(), p1.y(), p1.z(), material));

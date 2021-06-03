@@ -215,7 +215,11 @@ impl World for TwoSpheres {
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut shapes = HittableList::new();
         let pertext = NoiseTexture::new(4.0, rng);
-        shapes.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(pertext)));
+        shapes.add(Sphere::new(
+            Point3::new(0.0, -1000.0, 0.0),
+            1000.0,
+            Lambertian::new(pertext.clone()),
+        ));
         shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
 
         Box::new(shapes)
@@ -243,11 +247,15 @@ impl World for SimpleLight {
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut shapes = HittableList::new();
         let pertext = NoiseTexture::new(4.0, rng);
-        shapes.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(pertext)));
+        shapes.add(Sphere::new(
+            Point3::new(0.0, -1000.0, 0.0),
+            1000.0,
+            Lambertian::new(pertext.clone()),
+        ));
         shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
 
         let difflight = DiffuseLight::new(SolidColor::new(4.0, 4.0, 4.0));
-        shapes.add(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, difflight));
+        shapes.add(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, difflight.clone()));
         shapes.add(Sphere::new(Point3::new(0.0, 6.0, 0.0), 1.0, difflight));
 
         Box::new(shapes)

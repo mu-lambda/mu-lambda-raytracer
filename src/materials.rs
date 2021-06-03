@@ -3,7 +3,7 @@ use crate::textures::Texture;
 use crate::vec::{Color, Point3, Ray, Vec3};
 use rand::Rng;
 
-pub trait Material {
+pub trait Material: Sync {
     fn scatter(
         &self,
         ray: &Ray,
@@ -82,7 +82,7 @@ fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
     r_out_perp + r_out_parallel
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Dielectric {
     pub index_of_refraction: f64,
 }
@@ -128,7 +128,7 @@ impl Material for Dielectric {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct DiffuseLight<T: Texture> {
     texture: T,
 }

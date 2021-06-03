@@ -28,6 +28,7 @@ fn other(a0: Axis, a1: Axis) -> Axis {
 }
 
 // Axis-aligned rect
+#[derive(Clone, Copy)]
 pub struct AARect {
     a0: usize,
     a1: usize,

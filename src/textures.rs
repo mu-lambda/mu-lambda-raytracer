@@ -1,7 +1,7 @@
 use crate::vec::{Color, Point3, Vec3};
 use rand::Rng;
 
-pub trait Texture: Sync + Copy {
+pub trait Texture: Sync {
     fn value(&self, u: f64, v: f64, p: Point3) -> Color;
 }
 
@@ -50,7 +50,6 @@ impl<TOdd: Texture, TEven: Texture> Texture for Checker<TOdd, TEven> {
 
 const POINT_COUNT: usize = 256;
 
-#[derive(Copy, Clone)]
 struct Perlin {
     ranvec: [Vec3; POINT_COUNT],
     perm_x: [usize; POINT_COUNT],
@@ -150,15 +149,15 @@ impl Perlin {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct NoiseTexture {
-    noise: Perlin,
+    noise: std::sync::Arc<Perlin>,
     scale: f64,
 }
 
 impl NoiseTexture {
     pub fn new(scale: f64, rng: &mut dyn rand::RngCore) -> NoiseTexture {
-        NoiseTexture { noise: Perlin::new(rng), scale }
+        NoiseTexture { noise: std::sync::Arc::new(Perlin::new(rng)), scale }
     }
 }
 
