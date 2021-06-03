@@ -1,12 +1,13 @@
 use crate::bhv;
 use crate::hittable::{Hittable, HittableList};
+use crate::image_texture;
 use crate::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
 use crate::raytrace::{Background, BlackBackground, GradientBackground};
 use crate::shapes::{Block, Sphere, XYRect, XZRect, YZRect};
-use crate::textures;
-use crate::textures::{NoiseTexture, SolidColor};
+use crate::textures::{self, NoiseTexture, SolidColor};
 use crate::transforms::{self, Axis};
 use crate::vec::{Color, Point3, Vec3};
+use image;
 use rand::Rng;
 
 pub trait World {
@@ -195,6 +196,34 @@ impl World for RandomChk {
     }
 }
 
+struct Earth {}
+
+impl World for Earth {
+    fn name(&self) -> &'static str {
+        "earth"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(GradientBackground::default())
+    }
+
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(13.0, 2.0, 3.0),
+            lookat: Point3::new(0.0, 0.0, 0.0),
+            field_of_view: 20.0,
+        }
+    }
+
+    fn build(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+        let img = image::open("earthmap.jpg").unwrap();
+        let earth_texture = image_texture::Image::new(img.to_rgb8());
+        let earth_surface = Lambertian::new(earth_texture);
+        let globe = Sphere::new(Point3::ZERO, 2.0, earth_surface);
+
+        Box::new(globe)
+    }
+}
+
 struct TwoSpheres {}
 
 impl World for TwoSpheres {
@@ -319,5 +348,6 @@ pub fn worlds() -> Vec<Box<dyn World>> {
         Box::new(TwoSpheres {}),
         Box::new(SimpleLight {}),
         Box::new(CornellBox {}),
+        Box::new(Earth {}),
     ]
 }

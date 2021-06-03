@@ -2,6 +2,7 @@ mod aarects;
 pub mod bhv;
 pub mod camera;
 pub mod hittable;
+pub mod image_texture;
 pub mod materials;
 pub mod raytrace;
 pub mod rngator;
