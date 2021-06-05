@@ -374,7 +374,7 @@ impl World for FinalScene {
                     let z0 = -1000.0 + (j as f64) * w;
                     let y0 = 0.0;
                     let x1 = x0 + w;
-                    let y1 = rng.gen_range(1.0..101.0);
+                    let y1 = rng.gen_range(1.0..70.0);
                     let z1 = z0 + w;
                     ground_blocks.add(Block::new(Point3::new(x0, y0, z0), Point3::new(x1, y1, z1), ground.clone()));
                 }
@@ -403,7 +403,7 @@ impl World for FinalScene {
         {
             // Fill everything with fog.
             let boundary = Sphere::new(Point3::ZERO, 1000.0, Dielectric::new(1.5));
-            shapes.add(volumes::ConstantMedium::from_color(boundary, 0.0001, Color::ONE));
+            shapes.add(volumes::ConstantMedium::from_color(boundary, 0.0003, Color::ONE));
         }
 
         {
