@@ -131,7 +131,7 @@ fn do_it<T>(parameters: Parameters, rngator: T)
 where
     T: Rngator,
 {
-    let mut rng = rngator.rng();
+    let mut rng = rngator.rng(0);
 
     // World
     let world = parameters.world.build(&mut rng);

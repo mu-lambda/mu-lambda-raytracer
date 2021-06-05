@@ -358,7 +358,7 @@ impl World for FinalScene {
 
         {
             // Light.
-            let light = DiffuseLight::new(SolidColor::new(7.0, 7.0, 7.0));
+            let light = DiffuseLight::new(SolidColor::new(9.0, 9.0, 9.0));
             shapes.add(XZRect::new(123.0, 423.0, 147.0, 412.0, 554.0, light));
         }
 
@@ -382,9 +382,9 @@ impl World for FinalScene {
             shapes.add(bhv::BHV::new(&mut ground_blocks, rng));
         }
 
-        // Gold sphere in the top leftcorner.
+        // Gold sphere in the top left corner.
         let gold_sphere =
-            Sphere::new(Point3::new(400.0, 400.0, 200.0), 50.0, Lambertian::new(SolidColor::new(0.7, 0.3, 0.1)));
+            Sphere::new(Point3::new(400.0, 400.0, 400.0), 50.0, Lambertian::new(SolidColor::new(0.7, 0.3, 0.1)));
         shapes.add(gold_sphere);
 
         // Glass sphere.
@@ -416,7 +416,7 @@ impl World for FinalScene {
 
         {
             // Noise.
-            let pertext = NoiseTexture::new(0.1, rng);
+            let pertext = NoiseTexture::new(4.0, rng);
             shapes.add(Sphere::new(Point3::new(220.0, 280.0, 300.0), 80.0, Lambertian::new(pertext)));
         }
 

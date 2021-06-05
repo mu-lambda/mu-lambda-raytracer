@@ -118,7 +118,7 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
         (0..self.parameters.image_height)
             .into_par_iter()
             .map(|j| {
-                let mut rng = self.rng.rng();
+                let mut rng = self.rng.rng(j as u64);
                 let mut line = vec![(0, 0, 0); self.parameters.image_width];
                 self.render_line(j, line.as_mut_slice(), &mut rng);
                 logger(j, self.parameters.image_height);
