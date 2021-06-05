@@ -29,10 +29,10 @@ impl<T: Hittable> Translate<T> {
 }
 
 impl<T: Hittable> Hittable for Translate<T> {
-    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'a>> {
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64, rng: &mut dyn rand::RngCore) -> Option<Hit<'a>> {
         let moved_r = Ray { orig: r.orig - self.offset, dir: r.dir };
 
-        match self.original.hit(&moved_r, t_min, t_max) {
+        match self.original.hit(&moved_r, t_min, t_max, rng) {
             None => None,
             Some(h) => {
                 Some(Hit::new_with_face_normal(&(h.p + self.offset), h.t, h.u, h.v, &h.normal, &moved_r, h.material))
@@ -125,12 +125,12 @@ impl<T: Bounded> Rotate<T> {
 }
 
 impl<T: Bounded> Hittable for Rotate<T> {
-    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'a>> {
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64, rng: &mut dyn rand::RngCore) -> Option<Hit<'a>> {
         let o = self.rotate_back(&r.orig);
         let d = self.rotate_back(&r.dir);
 
         let rotated_r = Ray::new(o, d);
-        match self.original.hit(&rotated_r, t_min, t_max) {
+        match self.original.hit(&rotated_r, t_min, t_max, rng) {
             None => None,
             Some(h) => {
                 let p = self.rotate(&h.p);

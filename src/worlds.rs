@@ -7,6 +7,7 @@ use crate::shapes::{Block, Sphere, XYRect, XZRect, YZRect};
 use crate::textures::{self, NoiseTexture, SolidColor};
 use crate::transforms::{self, Axis};
 use crate::vec::{Color, Point3, Vec3};
+use crate::volumes;
 use image;
 use rand::Rng;
 
@@ -286,6 +287,54 @@ impl World for CornellBox {
     }
 }
 
+struct CornellSmoke {}
+
+impl World for CornellSmoke {
+    fn name(&self) -> &'static str {
+        "cornell_smoke"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(BlackBackground::new())
+    }
+
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(278.0, 278.0, -800.0),
+            lookat: Point3::new(278.0, 278.0, 0.0),
+            field_of_view: 40.0,
+        }
+    }
+
+    fn build(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+        let mut shapes = HittableList::new();
+        let red = Lambertian::new(SolidColor::new(0.65, 0.05, 0.05));
+        let white = Lambertian::new(SolidColor::new(0.73, 0.73, 0.73));
+        let green = Lambertian::new(SolidColor::new(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(SolidColor::new(7.0, 7.0, 7.0));
+
+        shapes.add(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green));
+        shapes.add(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red));
+
+        shapes.add(XZRect::new(113.0, 443.0, 127.0, 432.0, 554.0, light));
+
+        shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white));
+        shapes.add(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
+        shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
+
+        let large_block = Block::new(Point3::ZERO, Point3::new(165.0, 330.0, 165.0), white);
+        let large_block = transforms::Rotate::new(large_block, Axis::Y, 15.0);
+        let large_block = transforms::Translate::new(large_block, Vec3::new(265.0, 0.0, 295.0));
+        shapes.add(volumes::ConstantMedium::from_color(large_block, 0.01, Color::ZERO));
+
+        let small_block = Block::new(Point3::ZERO, Point3::new(165.0, 165.0, 165.0), white);
+        let small_block = transforms::Rotate::new(small_block, Axis::Y, -18.0);
+        let small_block = transforms::Translate::new(small_block, Vec3::new(130.0, 0.0, 65.0));
+        shapes.add(volumes::ConstantMedium::from_color(small_block, 0.01, Color::ONE));
+
+        Box::new(shapes)
+    }
+}
+
 pub fn worlds() -> Vec<Box<dyn World>> {
     vec![
         Box::new(Simple {}),
@@ -294,6 +343,7 @@ pub fn worlds() -> Vec<Box<dyn World>> {
         Box::new(TwoSpheres {}),
         Box::new(SimpleLight {}),
         Box::new(CornellBox {}),
+        Box::new(CornellSmoke {}),
         Box::new(Earth {}),
     ]
 }

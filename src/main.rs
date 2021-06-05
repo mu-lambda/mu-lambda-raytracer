@@ -10,6 +10,7 @@ pub mod shapes;
 pub mod textures;
 pub mod transforms;
 pub mod vec;
+pub mod volumes;
 pub mod worlds;
 
 use camera::Camera;

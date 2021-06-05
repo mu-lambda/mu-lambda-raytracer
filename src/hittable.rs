@@ -31,7 +31,7 @@ impl<'a> Hit<'a> {
 }
 
 pub trait Hittable: Sync {
-    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'a>>;
+    fn hit<'a>(&'a self, r: &Ray, t_min: f64, t_max: f64, rng: &mut dyn rand::RngCore) -> Option<Hit<'a>>;
 }
 
 pub struct HittableList<'a> {
@@ -51,12 +51,12 @@ impl<'a> HittableList<'a> {
 }
 
 impl<'a> Hittable for HittableList<'a> {
-    fn hit<'b>(&'b self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit<'b>> {
+    fn hit<'b>(&'b self, r: &Ray, t_min: f64, t_max: f64, rng: &mut dyn rand::RngCore) -> Option<Hit<'b>> {
         let mut result: Option<Hit> = None;
         let mut closest_so_far = t_max;
 
         for o in self.contents.iter() {
-            match o.hit(r, t_min, closest_so_far) {
+            match o.hit(r, t_min, closest_so_far, rng) {
                 Some(h) => {
                     closest_so_far = h.t;
                     result = Some(h);

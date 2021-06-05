@@ -11,7 +11,7 @@ impl Empty {
     pub const INSTANCE: Empty = Empty {};
 }
 impl Hittable for Empty {
-    fn hit(&self, _: &Ray, _: f64, _: f64) -> Option<Hit> {
+    fn hit(&self, _: &Ray, _: f64, _: f64, _: &mut dyn rand::RngCore) -> Option<Hit> {
         None
     }
 }
@@ -55,7 +55,7 @@ fn sphere_uv(normal: &Vec3) -> (f64, f64) {
 }
 
 impl<T: Material + Sync> Hittable for Sphere<T> {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, _: &mut dyn rand::RngCore) -> Option<Hit> {
         let oc = &r.orig - &self.center;
         let a = r.dir.length_squared();
         let half_b = oc.dot(r.dir);
@@ -102,7 +102,7 @@ impl<T: Material> XYRect<T> {
 }
 
 impl<T: Material + Sync> Hittable for XYRect<T> {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit> {
+    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, _: &mut dyn rand::RngCore) -> Option<Hit> {
         self.r.hit(r, tmin, tmax, &self.material)
     }
 }
@@ -127,7 +127,7 @@ impl<T: Material> XZRect<T> {
 }
 
 impl<T: Material + Sync> Hittable for XZRect<T> {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit> {
+    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, _: &mut dyn rand::RngCore) -> Option<Hit> {
         self.r.hit(r, tmin, tmax, &self.material)
     }
 }
@@ -152,7 +152,7 @@ impl<T: Material> YZRect<T> {
 }
 
 impl<T: Material + Sync> Hittable for YZRect<T> {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit> {
+    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, _: &mut dyn rand::RngCore) -> Option<Hit> {
         self.r.hit(r, tmin, tmax, &self.material)
     }
 }
@@ -186,8 +186,8 @@ impl<'a> Block<'a> {
     }
 }
 impl<'a> Hittable for Block<'a> {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit> {
-        self.sides.hit(r, tmin, tmax)
+    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, rng: &mut dyn rand::RngCore) -> Option<Hit> {
+        self.sides.hit(r, tmin, tmax, rng)
     }
 }
 

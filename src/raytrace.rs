@@ -143,7 +143,7 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
         if depth <= 0 {
             return Color::ZERO;
         }
-        match world.hit(ray, 0.001, f64::INFINITY) {
+        match world.hit(ray, 0.001, f64::INFINITY, rng) {
             Some(h) => match h.material.scatter(ray, &h, rng) {
                 Some((attenuation, scattered)) => {
                     return attenuation * self.ray_color(&scattered, world, depth - 1, rng);

@@ -95,8 +95,8 @@ impl<'a> BHV<'a> {
 }
 
 impl<'b> Hittable for BHV<'b> {
-    fn hit<'a>(&'a self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'a>> {
-        self.root.hit(r, tmin, tmax)
+    fn hit<'a>(&'a self, r: &Ray, tmin: f64, tmax: f64, rng: &mut dyn rand::RngCore) -> Option<Hit<'a>> {
+        self.root.hit(r, tmin, tmax, rng)
     }
 }
 
@@ -144,19 +144,19 @@ impl<'a> Node<'a> {
         }
     }
 
-    fn hit<'b>(&'b self, r: &Ray, tmin: f64, tmax: f64) -> Option<Hit<'b>> {
+    fn hit<'b>(&'b self, r: &Ray, tmin: f64, tmax: f64, rng: &mut dyn rand::RngCore) -> Option<Hit<'b>> {
         match self {
-            Node::Leaf { shape } => shape.hit(r, tmin, tmax),
+            Node::Leaf { shape } => shape.hit(r, tmin, tmax, rng),
             Node::Inner { left, right, bounds } => {
                 if !bounds.hit(r, tmin, tmax) {
                     return None;
                 }
-                let hit_left = left.hit(r, tmin, tmax);
+                let hit_left = left.hit(r, tmin, tmax, rng);
                 let tmax_for_right = match hit_left.as_ref() {
                     Some(h) => h.t,
                     None => tmax,
                 };
-                match right.hit(r, tmin, tmax_for_right) {
+                match right.hit(r, tmin, tmax_for_right, rng) {
                     None => hit_left,
                     hit_right => hit_right,
                 }
