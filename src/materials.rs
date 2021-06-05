@@ -4,12 +4,7 @@ use crate::vec::{Color, Point3, Ray, Vec3};
 use rand::Rng;
 
 pub trait Material: Sync {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        h: &hittable::Hit,
-        rng: &mut dyn rand::RngCore,
-    ) -> Option<(Color, Ray)>;
+    fn scatter(&self, ray: &Ray, h: &hittable::Hit, rng: &mut dyn rand::RngCore) -> Option<(Color, Ray)>;
 
     fn emit(&self, _u: f64, _v: f64, _p: Point3) -> Color {
         Color::ZERO
@@ -28,12 +23,7 @@ impl<T: Texture> Lambertian<T> {
 }
 
 impl<T: Texture> Material for Lambertian<T> {
-    fn scatter(
-        &self,
-        _ray: &Ray,
-        h: &hittable::Hit,
-        rng: &mut dyn rand::RngCore,
-    ) -> Option<(Color, Ray)> {
+    fn scatter(&self, _ray: &Ray, h: &hittable::Hit, rng: &mut dyn rand::RngCore) -> Option<(Color, Ray)> {
         let mut scatter_direction = h.normal + Vec3::random_in_hemisphere(&h.normal, rng);
         if scatter_direction.near_zero() {
             scatter_direction = h.normal;
@@ -59,12 +49,7 @@ fn reflect(v: Vec3, n: Vec3) -> Vec3 {
 }
 
 impl Material for Metal {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        h: &hittable::Hit,
-        rng: &mut dyn rand::RngCore,
-    ) -> Option<(Color, Ray)> {
+    fn scatter(&self, ray: &Ray, h: &hittable::Hit, rng: &mut dyn rand::RngCore) -> Option<(Color, Ray)> {
         let reflected = reflect(ray.dir.unit(), h.normal);
         let scattered = Ray::new(h.p, reflected + self.fuzz * Vec3::random_in_unit_sphere(rng));
         if scattered.dir.dot(h.normal) > 0.0 {
@@ -101,24 +86,16 @@ fn reflectance(cos_theta: f64, refraction_ratio: f64) -> f64 {
 }
 
 impl Material for Dielectric {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        h: &hittable::Hit,
-        rng: &mut dyn rand::RngCore,
-    ) -> Option<(Color, Ray)> {
+    fn scatter(&self, ray: &Ray, h: &hittable::Hit, rng: &mut dyn rand::RngCore) -> Option<(Color, Ray)> {
         let attenuation = Color::new(1.0, 1.0, 1.0);
-        let refraction_ratio =
-            if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
+        let refraction_ratio = if !h.front_face { self.index_of_refraction } else { 1.0 / self.index_of_refraction };
 
         let unit_direction = ray.dir.unit();
         let cos_theta = h.normal.dot(-unit_direction).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
-        let direction = if cannot_refract
-            || reflectance(cos_theta, refraction_ratio) > rng.gen_range(0.0..1.0)
-        {
+        let direction = if cannot_refract || reflectance(cos_theta, refraction_ratio) > rng.gen_range(0.0..1.0) {
             reflect(unit_direction, h.normal)
         } else {
             refract(unit_direction, h.normal, refraction_ratio)
@@ -140,12 +117,7 @@ impl<T: Texture> DiffuseLight<T> {
 }
 
 impl<T: Texture> Material for DiffuseLight<T> {
-    fn scatter(
-        &self,
-        _: &Ray,
-        _: &hittable::Hit,
-        _: &mut dyn rand::RngCore,
-    ) -> Option<(Color, Ray)> {
+    fn scatter(&self, _: &Ray, _: &hittable::Hit, _: &mut dyn rand::RngCore) -> Option<(Color, Ray)> {
         None
     }
 

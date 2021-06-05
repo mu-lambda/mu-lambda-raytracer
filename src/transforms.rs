@@ -34,15 +34,9 @@ impl<T: Hittable> Hittable for Translate<T> {
 
         match self.original.hit(&moved_r, t_min, t_max) {
             None => None,
-            Some(h) => Some(Hit::new_with_face_normal(
-                &(h.p + self.offset),
-                h.t,
-                h.u,
-                h.v,
-                &h.normal,
-                &moved_r,
-                h.material,
-            )),
+            Some(h) => {
+                Some(Hit::new_with_face_normal(&(h.p + self.offset), h.t, h.u, h.v, &h.normal, &moved_r, h.material))
+            }
         }
     }
 }

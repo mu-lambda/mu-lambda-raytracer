@@ -35,11 +35,7 @@ impl World for Simple {
     }
 
     fn camera(&self) -> WorldCamera {
-        WorldCamera {
-            lookfrom: Point3::new(-2.0, 2.0, 1.0),
-            lookat: Point3::new(0.0, 0.0, -1.0),
-            field_of_view: 20.0,
-        }
+        WorldCamera { lookfrom: Point3::new(-2.0, 2.0, 1.0), lookat: Point3::new(0.0, 0.0, -1.0), field_of_view: 20.0 }
     }
 
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
@@ -76,11 +72,7 @@ impl World for Random {
         Box::new(GradientBackground::default())
     }
     fn camera(&self) -> WorldCamera {
-        WorldCamera {
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-        }
+        WorldCamera { lookfrom: Point3::new(13.0, 2.0, 3.0), lookat: Point3::new(0.0, 0.0, 0.0), field_of_view: 20.0 }
     }
 
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
@@ -92,8 +84,7 @@ impl World for Random {
         for a in -11..11 {
             for b in -11..11 {
                 let choose_mat = rnd01(rng);
-                let center =
-                    Point3::new(a as f64 + 0.9 * rnd01(rng), 0.2, b as f64 + 0.9 * rnd01(rng));
+                let center = Point3::new(a as f64 + 0.9 * rnd01(rng), 0.2, b as f64 + 0.9 * rnd01(rng));
 
                 if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                     if choose_mat < 0.8 {
@@ -113,16 +104,8 @@ impl World for Random {
 
         world
             .add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)))
-            .add(Sphere::new(
-                Point3::new(-4.0, 1.0, 0.0),
-                1.0,
-                Lambertian::new(SolidColor::new(0.4, 0.2, 0.1)),
-            ))
-            .add(Sphere::new(
-                Point3::new(4.0, 1.0, 0.0),
-                1.0,
-                Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
-            ));
+            .add(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(SolidColor::new(0.4, 0.2, 0.1))))
+            .add(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Color::new(0.7, 0.6, 0.5), 0.0)));
 
         Box::new(bhv::BHV::new(&mut world, rng))
     }
@@ -139,35 +122,25 @@ impl World for RandomChk {
     }
 
     fn camera(&self) -> WorldCamera {
-        WorldCamera {
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-        }
+        WorldCamera { lookfrom: Point3::new(13.0, 2.0, 3.0), lookat: Point3::new(0.0, 0.0, 0.0), field_of_view: 20.0 }
     }
 
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut world = bhv::SceneBuilder::new();
 
-        let checker =
-            textures::Checker::new(SolidColor::new(0.2, 0.3, 0.1), SolidColor::new(0.9, 0.9, 0.9));
+        let checker = textures::Checker::new(SolidColor::new(0.2, 0.3, 0.1), SolidColor::new(0.9, 0.9, 0.9));
         let ground_material = Lambertian::new(checker);
         world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
 
         for a in -11..11 {
             for b in -11..11 {
                 let choose_mat = rnd01(rng);
-                let center =
-                    Point3::new(a as f64 + 0.9 * rnd01(rng), 0.2, b as f64 + 0.9 * rnd01(rng));
+                let center = Point3::new(a as f64 + 0.9 * rnd01(rng), 0.2, b as f64 + 0.9 * rnd01(rng));
 
                 if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                     if choose_mat < 0.8 {
                         let albedo = Color::random_unit(rng) * Color::random_unit(rng);
-                        world.add(Sphere::new(
-                            center,
-                            0.2,
-                            Lambertian::new(SolidColor::from_color(albedo)),
-                        ));
+                        world.add(Sphere::new(center, 0.2, Lambertian::new(SolidColor::from_color(albedo))));
                     } else if choose_mat < 0.95 {
                         let albedo = Color::random(0.5, 1.0, rng);
                         let fuzz = rng.gen_range(0.0..0.5);
@@ -181,16 +154,8 @@ impl World for RandomChk {
 
         world
             .add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)))
-            .add(Sphere::new(
-                Point3::new(-4.0, 1.0, 0.0),
-                1.0,
-                Lambertian::new(SolidColor::new(0.4, 0.2, 0.1)),
-            ))
-            .add(Sphere::new(
-                Point3::new(4.0, 1.0, 0.0),
-                1.0,
-                Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
-            ));
+            .add(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(SolidColor::new(0.4, 0.2, 0.1))))
+            .add(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Color::new(0.7, 0.6, 0.5), 0.0)));
 
         Box::new(bhv::BHV::new(&mut world, rng))
     }
@@ -207,11 +172,7 @@ impl World for Earth {
     }
 
     fn camera(&self) -> WorldCamera {
-        WorldCamera {
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-        }
+        WorldCamera { lookfrom: Point3::new(13.0, 2.0, 3.0), lookat: Point3::new(0.0, 0.0, 0.0), field_of_view: 20.0 }
     }
 
     fn build(&self, _: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
@@ -235,21 +196,13 @@ impl World for TwoSpheres {
     }
 
     fn camera(&self) -> WorldCamera {
-        WorldCamera {
-            lookfrom: Point3::new(13.0, 2.0, 3.0),
-            lookat: Point3::new(0.0, 0.0, 0.0),
-            field_of_view: 20.0,
-        }
+        WorldCamera { lookfrom: Point3::new(13.0, 2.0, 3.0), lookat: Point3::new(0.0, 0.0, 0.0), field_of_view: 20.0 }
     }
 
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut shapes = HittableList::new();
         let pertext = NoiseTexture::new(4.0, rng);
-        shapes.add(Sphere::new(
-            Point3::new(0.0, -1000.0, 0.0),
-            1000.0,
-            Lambertian::new(pertext.clone()),
-        ));
+        shapes.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(pertext.clone())));
         shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
 
         Box::new(shapes)
@@ -267,21 +220,13 @@ impl World for SimpleLight {
     }
 
     fn camera(&self) -> WorldCamera {
-        WorldCamera {
-            lookfrom: Point3::new(20.0, 3.0, 6.0),
-            lookat: Point3::new(0.0, 2.0, 0.0),
-            field_of_view: 20.0,
-        }
+        WorldCamera { lookfrom: Point3::new(20.0, 3.0, 6.0), lookat: Point3::new(0.0, 2.0, 0.0), field_of_view: 20.0 }
     }
 
     fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
         let mut shapes = HittableList::new();
         let pertext = NoiseTexture::new(4.0, rng);
-        shapes.add(Sphere::new(
-            Point3::new(0.0, -1000.0, 0.0),
-            1000.0,
-            Lambertian::new(pertext.clone()),
-        ));
+        shapes.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(pertext.clone())));
         shapes.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(pertext)));
 
         let difflight = DiffuseLight::new(SolidColor::new(0.0, 7.0, 0.0));

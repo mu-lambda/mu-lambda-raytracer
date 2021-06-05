@@ -34,15 +34,7 @@ impl Camera {
         let horizontal = focus_dist * viewport_width * u;
         let vertical = focus_dist * viewport_height * v;
         let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - focus_dist * w;
-        return Camera {
-            origin,
-            lower_left_corner,
-            horizontal,
-            vertical,
-            u,
-            v,
-            lens_radius: aperture / 2.0,
-        };
+        return Camera { origin, lower_left_corner, horizontal, vertical, u, v, lens_radius: aperture / 2.0 };
     }
 
     pub fn get_ray(&self, s: f64, t: f64, rng: &mut dyn rand::RngCore) -> Ray {
@@ -51,9 +43,7 @@ impl Camera {
 
         Ray {
             orig: self.origin + offset,
-            dir: self.lower_left_corner + s * self.horizontal + t * self.vertical
-                - self.origin
-                - offset,
+            dir: self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
         }
     }
 }

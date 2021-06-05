@@ -97,12 +97,10 @@ fn args() -> Parameters {
     let aspect_ratio = parse_aspect_ratio(matches.value_of("aspect_ratio").unwrap());
     let image_width = val::<usize>(&matches, "image_width");
 
-    let lookfrom =
-        matches.value_of("lookfrom").map_or(world.camera().lookfrom, |v| parse_vector(&v));
+    let lookfrom = matches.value_of("lookfrom").map_or(world.camera().lookfrom, |v| parse_vector(&v));
     let lookat = matches.value_of("lookat").map_or(world.camera().lookat, |v| parse_vector(&v));
-    let field_of_view = matches
-        .value_of("field_of_view")
-        .map_or(world.camera().field_of_view, |v| v.parse::<f64>().unwrap());
+    let field_of_view =
+        matches.value_of("field_of_view").map_or(world.camera().field_of_view, |v| v.parse::<f64>().unwrap());
 
     let focus_dist = match matches.value_of("focus_dist") {
         None => (lookat - lookfrom).length(),
@@ -153,13 +151,7 @@ where
     println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(usize::MAX);
-    let rt = RayTracer::new_with_rng(
-        &cam,
-        world.as_ref(),
-        background.as_ref(),
-        parameters.render,
-        rngator,
-    );
+    let rt = RayTracer::new_with_rng(&cam, world.as_ref(), background.as_ref(), parameters.render, rngator);
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|_, total| {
         const R: Ordering = Ordering::Relaxed;

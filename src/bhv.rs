@@ -119,25 +119,19 @@ impl<'a> Node<'a> {
         }
     }
 
-    fn new<'b>(
-        shapes: &'b mut [Option<Box<dyn Bounded + 'a>>],
-        rng: &mut dyn rand::RngCore,
-    ) -> Node<'a> {
+    fn new<'b>(shapes: &'b mut [Option<Box<dyn Bounded + 'a>>], rng: &mut dyn rand::RngCore) -> Node<'a> {
         match shapes {
             [] => Node::Leaf { shape: Box::new(shapes::Empty::INSTANCE) },
             [v] => Node::Leaf { shape: v.take().unwrap() },
             _ => {
                 let axis = rng.gen_range(0..3);
-                let get_dim = |a: &Option<Box<dyn Bounded + 'a>>| {
-                    a.as_ref().unwrap().bounding_box().minimum.e[axis]
+                let get_dim = |a: &Option<Box<dyn Bounded + 'a>>| a.as_ref().unwrap().bounding_box().minimum.e[axis];
+                let comparator = |a: &Option<Box<dyn Bounded>>, b: &Option<Box<dyn Bounded>>| match get_dim(a)
+                    .partial_cmp(&get_dim(b))
+                {
+                    Some(ordering) => ordering,
+                    None => Ordering::Equal,
                 };
-                let comparator =
-                    |a: &Option<Box<dyn Bounded>>, b: &Option<Box<dyn Bounded>>| match get_dim(a)
-                        .partial_cmp(&get_dim(b))
-                    {
-                        Some(ordering) => ordering,
-                        None => Ordering::Equal,
-                    };
 
                 shapes.sort_by(comparator);
                 let (left_shapes, right_shapes) = shapes.split_at_mut(shapes.len() / 2);

@@ -28,15 +28,7 @@ pub struct AARect {
 }
 
 impl AARect {
-    pub fn new(
-        a0: Axis,
-        a0_v0: f64,
-        a0_v1: f64,
-        a1: Axis,
-        a1_v0: f64,
-        a1_v1: f64,
-        aplane_v: f64,
-    ) -> AARect {
+    pub fn new(a0: Axis, a0_v0: f64, a0_v1: f64, a1: Axis, a1_v0: f64, a1_v1: f64, aplane_v: f64) -> AARect {
         AARect {
             a0: index(a0),
             a1: index(a1),
@@ -50,13 +42,7 @@ impl AARect {
         }
     }
 
-    pub fn hit<'a>(
-        &self,
-        r: &Ray,
-        tmin: f64,
-        tmax: f64,
-        material: &'a dyn Material,
-    ) -> Option<Hit<'a>> {
+    pub fn hit<'a>(&self, r: &Ray, tmin: f64, tmax: f64, material: &'a dyn Material) -> Option<Hit<'a>> {
         let t = (self.aplane_v - r.orig.e[self.aplane]) / r.dir.e[self.aplane];
         if t < tmin || t > tmax {
             return None;

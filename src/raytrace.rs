@@ -130,13 +130,10 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
     pub fn render_pixel(&self, i: usize, j: usize, rng: &mut T::R) -> RGB {
         let mut pixel_color = Color::ZERO;
         for _ in 0..self.parameters.samples_per_pixel {
-            let u =
-                ((i as f64) + rng.gen_range(0.0..1.0)) / (self.parameters.image_width as f64 - 1.0);
-            let v = ((j as f64) + rng.gen_range(0.0..1.0))
-                / (self.parameters.image_height as f64 - 1.0);
+            let u = ((i as f64) + rng.gen_range(0.0..1.0)) / (self.parameters.image_width as f64 - 1.0);
+            let v = ((j as f64) + rng.gen_range(0.0..1.0)) / (self.parameters.image_height as f64 - 1.0);
             let r = self.camera.get_ray(u, v, rng);
-            pixel_color =
-                pixel_color + self.ray_color(&r, self.world, self.parameters.max_depth, rng);
+            pixel_color = pixel_color + self.ray_color(&r, self.world, self.parameters.max_depth, rng);
         }
 
         to_rgb(&pixel_color, self.parameters.samples_per_pixel)

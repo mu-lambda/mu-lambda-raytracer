@@ -104,8 +104,7 @@ impl Perlin {
                     let ii = (i + di as isize).rem_euclid(POINT_COUNT as isize) as usize;
                     let jj = (j + dj as isize).rem_euclid(POINT_COUNT as isize) as usize;
                     let kk = (k + dk as isize).rem_euclid(POINT_COUNT as isize) as usize;
-                    c[di][dj][dk] =
-                        self.ranvec[self.perm_x[ii] ^ self.perm_y[jj] ^ self.perm_z[kk]];
+                    c[di][dj][dk] = self.ranvec[self.perm_x[ii] ^ self.perm_y[jj] ^ self.perm_z[kk]];
                 }
             }
         }
