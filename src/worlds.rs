@@ -274,13 +274,13 @@ impl World for CornellBox {
         shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
 
         let large_block = Block::new(Point3::ZERO, Point3::new(165.0, 330.0, 165.0), white);
-        let large_block = transforms::Rotate::new(large_block, Axis::Y, 15.0);
-        let large_block = transforms::Translate::new(large_block, Vec3::new(265.0, 0.0, 295.0));
+        let large_block = transforms::Rotate::new(Axis::Y, 15.0, large_block);
+        let large_block = transforms::Translate::new(Vec3::new(265.0, 0.0, 295.0), large_block);
         shapes.add(large_block);
 
         let small_block = Block::new(Point3::ZERO, Point3::new(165.0, 165.0, 165.0), white);
-        let small_block = transforms::Rotate::new(small_block, Axis::Y, -18.0);
-        let small_block = transforms::Translate::new(small_block, Vec3::new(130.0, 0.0, 65.0));
+        let small_block = transforms::Rotate::new(Axis::Y, -18.0, small_block);
+        let small_block = transforms::Translate::new(Vec3::new(130.0, 0.0, 65.0), small_block);
         shapes.add(small_block);
 
         Box::new(shapes)
@@ -322,14 +322,117 @@ impl World for CornellSmoke {
         shapes.add(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white));
 
         let large_block = Block::new(Point3::ZERO, Point3::new(165.0, 330.0, 165.0), white);
-        let large_block = transforms::Rotate::new(large_block, Axis::Y, 15.0);
-        let large_block = transforms::Translate::new(large_block, Vec3::new(265.0, 0.0, 295.0));
+        let large_block = transforms::Rotate::new(Axis::Y, 15.0, large_block);
+        let large_block = transforms::Translate::new(Vec3::new(265.0, 0.0, 295.0), large_block);
         shapes.add(volumes::ConstantMedium::from_color(large_block, 0.01, Color::ZERO));
 
         let small_block = Block::new(Point3::ZERO, Point3::new(165.0, 165.0, 165.0), white);
-        let small_block = transforms::Rotate::new(small_block, Axis::Y, -18.0);
-        let small_block = transforms::Translate::new(small_block, Vec3::new(130.0, 0.0, 65.0));
+        let small_block = transforms::Rotate::new(Axis::Y, -18.0, small_block);
+        let small_block = transforms::Translate::new(Vec3::new(130.0, 0.0, 65.0), small_block);
         shapes.add(volumes::ConstantMedium::from_color(small_block, 0.01, Color::ONE));
+
+        Box::new(shapes)
+    }
+}
+
+struct FinalScene {}
+
+impl World for FinalScene {
+    fn name(&self) -> &'static str {
+        "final_scene"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(BlackBackground::new())
+    }
+
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(478.0, 278.0, -600.0),
+            lookat: Point3::new(278.0, 278.0, 0.0),
+            field_of_view: 40.0,
+        }
+    }
+
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+        let mut shapes = HittableList::new();
+
+        {
+            // Light.
+            let light = DiffuseLight::new(SolidColor::new(7.0, 7.0, 7.0));
+            shapes.add(XZRect::new(123.0, 423.0, 147.0, 412.0, 554.0, light));
+        }
+
+        {
+            // Ground.
+            let ground = Lambertian::new(SolidColor::new(0.48, 0.83, 0.53));
+            const BLOCKS_PER_SIDE: i32 = 20;
+            let mut ground_blocks = bhv::SceneBuilder::new();
+            for i in 0..BLOCKS_PER_SIDE {
+                for j in 0..BLOCKS_PER_SIDE {
+                    let w = 100.0;
+                    let x0 = -1000.0 + (i as f64) * w;
+                    let z0 = -1000.0 + (j as f64) * w;
+                    let y0 = 0.0;
+                    let x1 = x0 + w;
+                    let y1 = rng.gen_range(1.0..101.0);
+                    let z1 = z0 + w;
+                    ground_blocks.add(Block::new(Point3::new(x0, y0, z0), Point3::new(x1, y1, z1), ground.clone()));
+                }
+            }
+            shapes.add(bhv::BHV::new(&mut ground_blocks, rng));
+        }
+
+        // Gold sphere in the top leftcorner.
+        let gold_sphere =
+            Sphere::new(Point3::new(400.0, 400.0, 200.0), 50.0, Lambertian::new(SolidColor::new(0.7, 0.3, 0.1)));
+        shapes.add(gold_sphere);
+
+        // Glass sphere.
+        shapes.add(Sphere::new(Point3::new(260.0, 150.0, 45.0), 50.0, Dielectric::new(1.5)));
+
+        // Metallic sphere in the bottom right corner.
+        shapes.add(Sphere::new(Point3::new(0.0, 150.0, 145.0), 50.0, Metal::new(Color::new(0.8, 0.8, 0.9), 1.0)));
+
+        {
+            // Glass sphere filled with blue-ish smoke
+            let boundary = Sphere::new(Point3::new(360.0, 150.0, 145.0), 70.0, Dielectric::new(1.5));
+            shapes.add(boundary.clone());
+            shapes.add(volumes::ConstantMedium::from_color(boundary, 0.2, Color::new(0.2, 0.4, 0.9)));
+        }
+
+        {
+            // Fill everything with fog.
+            let boundary = Sphere::new(Point3::ZERO, 1000.0, Dielectric::new(1.5));
+            shapes.add(volumes::ConstantMedium::from_color(boundary, 0.0001, Color::ONE));
+        }
+
+        {
+            // Earth.
+            let img = image::open("earthmap.jpg").unwrap();
+            let earth_texture = image_texture::Image::new(img.to_rgb8());
+            let earth_surface = Lambertian::new(earth_texture);
+            shapes.add(Sphere::new(Point3::new(400.0, 200.0, 400.0), 100.0, earth_surface));
+        }
+
+        {
+            // Noise.
+            let pertext = NoiseTexture::new(0.1, rng);
+            shapes.add(Sphere::new(Point3::new(220.0, 280.0, 300.0), 80.0, Lambertian::new(pertext)));
+        }
+
+        {
+            // Foam.
+            let mut foam = bhv::SceneBuilder::new();
+            let white = Lambertian::new(SolidColor::new(0.73, 0.73, 0.73));
+            for _ in 0..1000 {
+                foam.add(Sphere::new(Point3::random(0.0, 165.0, rng), 10.0, white.clone()));
+            }
+            let foam = bhv::BHV::new(&mut foam, rng);
+            shapes.add(transforms::Translate::new(
+                Vec3::new(-100.0, 270.0, 395.0),
+                transforms::Rotate::new(Axis::Y, 15.0, foam),
+            ));
+        }
 
         Box::new(shapes)
     }
@@ -345,5 +448,6 @@ pub fn worlds() -> Vec<Box<dyn World>> {
         Box::new(CornellBox {}),
         Box::new(CornellSmoke {}),
         Box::new(Earth {}),
+        Box::new(FinalScene {}),
     ]
 }

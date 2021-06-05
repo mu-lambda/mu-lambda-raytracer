@@ -23,7 +23,7 @@ pub struct Translate<T: Hittable> {
 }
 
 impl<T: Hittable> Translate<T> {
-    pub fn new(original: T, offset: Vec3) -> Translate<T> {
+    pub fn new(offset: Vec3, original: T) -> Translate<T> {
         Translate { original, offset }
     }
 }
@@ -57,7 +57,7 @@ pub struct Rotate<T: Bounded> {
 }
 
 impl<T: Bounded> Rotate<T> {
-    pub fn new(original: T, axis: Axis, angle: f64) -> Rotate<T> {
+    pub fn new(axis: Axis, angle: f64, original: T) -> Rotate<T> {
         let a1 = index(axis); // if this is Y...
         let a2 = (a1 + 1) % 3; // ...this is Z...
         let a0 = (a1 + 2) % 3; // ...and this is X
