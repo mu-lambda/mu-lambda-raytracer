@@ -403,7 +403,7 @@ impl World for FinalScene {
         {
             // Fill everything with fog.
             let boundary = Sphere::new(Point3::ZERO, 1000.0, Dielectric::new(1.5));
-            shapes.add(volumes::ConstantMedium::from_color(boundary, 0.0003, Color::ONE));
+            shapes.add(volumes::ConstantMedium::from_color(boundary, 0.0001, Color::ONE));
         }
 
         {
