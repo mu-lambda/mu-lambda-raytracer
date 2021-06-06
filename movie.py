@@ -2,6 +2,11 @@ import subprocess
 import os
 from math import sqrt, sin, cos, atan2, pi
 
+step_grad=0.5
+nframes=300 # 200 frames = turn 150 grads
+image_width=640
+samples_per_pixel=5000
+
 def render_image(i, lookat, lookfrom):
     (x0, y0, z0) = lookat
     (x,y,z) = lookfrom
@@ -9,11 +14,11 @@ def render_image(i, lookat, lookfrom):
     f = open(fn + ".ppm", "w")
     result = subprocess.run(
             ["./target/release/raytracer",
-            "--world=random",
+            "--world=final_scene",
             "--seed=42", 
-            "--aspect_ratio=3:2",
-            "--image_width=640",
-            "--samples_per_pixel=500",
+            "--aspect_ratio=1:1",
+            "--image_width={}".format(image_width),
+            "--samples_per_pixel={}".format(samples_per_pixel),
             "--lookat={},{},{}".format(x0,y0,z0), 
             "--lookfrom={},{},{}".format(x,y,z)],
 
@@ -45,18 +50,18 @@ def minus(a0b0c0):
     (a0,b0,c0) = a0b0c0
     return (-a0, -b0, -c0)
 
-origin = (0, 0, 0)
-start = (13, 2.0, 3.0)
+origin = (278, 278, 400)
+start = (478, 278, -600)
 delta = add(start, minus(origin))
 
 p_delta = cart_to_polar(delta)
 
 grad = pi / 180
 
-for i in range(0,1800):
+for i in range(0,nframes):
     c_delta = polar_to_cart(p_delta)
     print("Frame {}: {}".format(i, c_delta))
     render_image(i, origin, add(origin,c_delta))
-    p_delta = add(p_delta, (0, 0.5*grad, 0)) 
+    p_delta = add(p_delta, (0, step_grad*grad, 0)) 
 
 # ffmpeg -r 30 -f image2 -i _movie/frame\%04d.png -vcodec libx264 -crf 25 test.mpg
