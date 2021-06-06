@@ -1,4 +1,4 @@
 #! /bin/sh
 set -e
 cargo test 
-rustfmt src/*.rs -l | xargs git add 
+git diff --name-only --staged | grep .rs$ | xargs rustfmt -l | xargs git add 
