@@ -48,7 +48,7 @@ impl<TOdd: Texture, TEven: Texture> Texture for Checker<TOdd, TEven> {
     }
 }
 
-const POINT_COUNT: usize = 256;
+const POINT_COUNT: usize = 1024;
 
 struct Perlin {
     ranvec: [Vec3; POINT_COUNT],
@@ -162,6 +162,6 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f64, _v: f64, p: Point3) -> Color {
-        Color::ONE * 0.5 * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(&p)).sin())
+        Color::ONE * 0.5 * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(&(self.scale * p))).sin())
     }
 }

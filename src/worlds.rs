@@ -334,6 +334,36 @@ impl World for CornellSmoke {
         Box::new(shapes)
     }
 }
+struct DebugPerlin {}
+
+impl World for DebugPerlin {
+    fn name(&self) -> &'static str {
+        "debug_perlin"
+    }
+    fn background(&self) -> Box<dyn Background> {
+        Box::new(GradientBackground::default())
+    }
+
+    fn camera(&self) -> WorldCamera {
+        WorldCamera {
+            lookfrom: Point3::new(278.0, 278.0, -600.0),
+            lookat: Point3::new(278.0, 278.0, 0.0),
+            field_of_view: 40.0,
+        }
+    }
+
+    fn build(&self, rng: &mut dyn rand::RngCore) -> Box<dyn Hittable> {
+        let mut shapes = HittableList::new();
+
+        {
+            // Noise.
+            let pertext = NoiseTexture::new(0.1, rng);
+            shapes.add(Sphere::new(Point3::new(278.0, 278.0, 0.0), 80.0, Lambertian::new(pertext)));
+        }
+
+        Box::new(shapes)
+    }
+}
 
 struct FinalScene {}
 
@@ -416,7 +446,7 @@ impl World for FinalScene {
 
         {
             // Noise.
-            let pertext = NoiseTexture::new(4.0, rng);
+            let pertext = NoiseTexture::new(0.1, rng);
             shapes.add(Sphere::new(Point3::new(220.0, 280.0, 300.0), 80.0, Lambertian::new(pertext)));
         }
 
@@ -448,6 +478,7 @@ pub fn worlds() -> Vec<Box<dyn World>> {
         Box::new(CornellBox {}),
         Box::new(CornellSmoke {}),
         Box::new(Earth {}),
+        Box::new(DebugPerlin {}),
         Box::new(FinalScene {}),
     ]
 }
