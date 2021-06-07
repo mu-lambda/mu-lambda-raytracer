@@ -34,4 +34,4 @@ cargo run --release -- --world=final_scene --seed=42 \
 ```
 
 ![Final scene](final_scene.jpg)
-(something is wrong with Perlin noise here)
+
