@@ -1,5 +1,6 @@
 /target
 /_movie
+/_movie_experiments
 *.rustfmt
 *.swp
 test.ppm
