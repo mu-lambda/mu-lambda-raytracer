@@ -24,6 +24,7 @@ use vec::{Point3, Vec3};
 struct Parameters {
     pub world: Box<dyn worlds::World>,
     pub seed: Option<u64>,
+    pub randomized_rendering: bool,
 
     pub aspect_ratio: f64,
     pub render: raytrace::RenderingParams,
@@ -82,6 +83,7 @@ fn args() -> Parameters {
                 .default_value("simple"),
         )
         .arg(Arg::with_name("seed").long("seed").takes_value(true))
+        .arg(Arg::with_name("randomized_rendering").long("randomized_rendering").short("rr"))
         .get_matches();
 
     fn val<'a, T>(m: &ArgMatches<'a>, name: &str) -> T
@@ -111,6 +113,7 @@ fn args() -> Parameters {
     Parameters {
         world,
         seed: matches.value_of("seed").map(|v| v.parse::<u64>().unwrap()),
+        randomized_rendering: matches.is_present("randomized_rendering"),
         aspect_ratio,
         render: raytrace::RenderingParams {
             image_width,
@@ -127,32 +130,20 @@ fn args() -> Parameters {
     }
 }
 
-fn do_it<T>(parameters: Parameters, rngator: T)
-where
+fn do_tracing<T>(
+    params: raytrace::RenderingParams,
+    camera: &Camera,
+    world: &dyn hittable::Hittable,
+    background: &dyn raytrace::Background,
+    rngator: T,
+) where
     T: Rngator,
 {
-    let mut rng = rngator.rng(0);
-
-    // World
-    let world = parameters.world.build(&mut rng);
-    let background = parameters.world.background();
-
-    // Camera
-    let cam = Camera::new(
-        parameters.lookfrom,
-        parameters.lookat,
-        parameters.up,
-        parameters.field_of_view,
-        parameters.aspect_ratio,
-        parameters.aperture,
-        parameters.focus_dist,
-    );
-
     // Render
-    println!("P3\n{} {}\n255", parameters.render.image_width, parameters.render.image_height);
+    println!("P3\n{} {}\n255", params.image_width, params.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(usize::MAX);
-    let rt = RayTracer::new_with_rng(&cam, world.as_ref(), background.as_ref(), parameters.render, rngator);
+    let rt = RayTracer::new_with_rng(camera, world, background, params, rngator);
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|_, total| {
         const R: Ordering = Ordering::Relaxed;
@@ -176,6 +167,33 @@ where
         for (r, g, b) in line.iter() {
             println!("{} {} {}", r, g, b);
         }
+    }
+}
+fn do_it<T>(parameters: Parameters, rngator: T)
+where
+    T: Rngator,
+{
+    let mut rng = rngator.rng(0);
+
+    // World
+    let world = parameters.world.build(&mut rng);
+    let background = parameters.world.background();
+
+    // Camera
+    let cam = Camera::new(
+        parameters.lookfrom,
+        parameters.lookat,
+        parameters.up,
+        parameters.field_of_view,
+        parameters.aspect_ratio,
+        parameters.aperture,
+        parameters.focus_dist,
+    );
+
+    if parameters.randomized_rendering {
+        do_tracing(parameters.render, &cam, world.as_ref(), background.as_ref(), rngator::ThreadRngator {});
+    } else {
+        do_tracing(parameters.render, &cam, world.as_ref(), background.as_ref(), rngator);
     }
 }
 

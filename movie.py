@@ -2,10 +2,15 @@ import subprocess
 import os
 from math import sqrt, sin, cos, atan2, pi
 
+#step_grad=0.5
+#nframes=300 # 200 frames = turn 150 grads
+#image_width=640
+#samples_per_pixel=5000
+
 step_grad=0.5
-nframes=300 # 200 frames = turn 150 grads
+nframes=10
 image_width=640
-samples_per_pixel=5000
+samples_per_pixel=200
 
 def render_image(i, lookat, lookfrom):
     (x0, y0, z0) = lookat
