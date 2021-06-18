@@ -15,7 +15,7 @@ pub mod worlds;
 
 use camera::Camera;
 use clap::{App, Arg, ArgMatches};
-use raytrace::RayTracer;
+use raytrace::{RayTracer, RecursiveRayTracer};
 use rngator::Rngator;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
@@ -28,6 +28,7 @@ struct Parameters {
 
     pub aspect_ratio: f64,
     pub render: raytrace::RenderingParams,
+    pub max_depth: i32,
 
     pub lookfrom: Point3,
     pub lookat: Point3,
@@ -119,8 +120,8 @@ fn args() -> Parameters {
             image_width,
             image_height: (image_width as f64 / aspect_ratio) as usize,
             samples_per_pixel: val::<i32>(&matches, "samples_per_pixel"),
-            max_depth: val::<i32>(&matches, "max_depth"),
         },
+        max_depth: val::<i32>(&matches, "max_depth"),
         lookfrom,
         lookat,
         up: parse_vector(matches.value_of("up").unwrap()),
@@ -131,7 +132,7 @@ fn args() -> Parameters {
 }
 
 fn do_tracing<T>(
-    params: raytrace::RenderingParams,
+    params: Parameters,
     camera: &Camera,
     world: &dyn hittable::Hittable,
     background: &dyn raytrace::Background,
@@ -140,10 +141,17 @@ fn do_tracing<T>(
     T: Rngator,
 {
     // Render
-    println!("P3\n{} {}\n255", params.image_width, params.image_height);
+    println!("P3\n{} {}\n255", params.render.image_width, params.render.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(usize::MAX);
-    let rt = RayTracer::new_with_rng(camera, world, background, params, rngator);
+    let rt = RayTracer::new_with_rng(
+        camera,
+        world,
+        background,
+        params.render,
+        RecursiveRayTracer { max_depth: params.max_depth },
+        rngator,
+    );
     let last_logged = AtomicUsize::new(0);
     let image = rt.render(|_, total| {
         const R: Ordering = Ordering::Relaxed;
@@ -191,9 +199,9 @@ where
     );
 
     if parameters.randomized_rendering {
-        do_tracing(parameters.render, &cam, world.as_ref(), background.as_ref(), rngator::ThreadRngator {});
+        do_tracing(parameters, &cam, world.as_ref(), background.as_ref(), rngator::ThreadRngator {});
     } else {
-        do_tracing(parameters.render, &cam, world.as_ref(), background.as_ref(), rngator);
+        do_tracing(parameters, &cam, world.as_ref(), background.as_ref(), rngator);
     }
 }
 

@@ -2,7 +2,7 @@ use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::rngator;
 use crate::vec::{Color, Ray};
-use rand::Rng;
+use rand::{Rng, RngCore};
 use rayon::prelude::*;
 
 pub trait Background: Sync {
@@ -52,7 +52,6 @@ pub struct RenderingParams {
     pub samples_per_pixel: i32,
     pub image_height: usize,
     pub image_width: usize,
-    pub max_depth: i32,
 }
 
 pub type RGB = (i32, i32, i32);
@@ -68,37 +67,69 @@ pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
     (ir, ig, ib)
 }
 
-pub struct RayTracer<'a, T = rngator::ThreadRngator>
+pub trait RayTracingAlgorithm: Sync {
+    fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color;
+}
+
+pub struct RecursiveRayTracer {
+    pub max_depth: i32,
+}
+
+impl RecursiveRayTracer {
+    fn trace_internal(
+        &self,
+        ray: &Ray,
+        world: &dyn Hittable,
+        background: &dyn Background,
+        depth: i32,
+        rng: &mut dyn RngCore,
+    ) -> Color {
+        if depth <= 0 {
+            return Color::ZERO;
+        }
+        match world.hit(ray, 0.001, f64::INFINITY, rng) {
+            Some(h) => match h.material.scatter(ray, &h, rng) {
+                Some((attenuation, scattered)) => {
+                    return attenuation * self.trace_internal(&scattered, world, background, depth - 1, rng);
+                }
+                None => {
+                    return h.material.emit(h.u, h.v, h.p);
+                }
+            },
+            None => background.color(ray),
+        }
+    }
+}
+
+impl RayTracingAlgorithm for RecursiveRayTracer {
+    fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color {
+        self.trace_internal(ray, world, background, self.max_depth, rng)
+    }
+}
+
+pub struct RayTracer<'a, Tracer = RecursiveRayTracer, T = rngator::ThreadRngator>
 where
+    Tracer: RayTracingAlgorithm,
     T: rngator::Rngator,
 {
     camera: &'a Camera,
     world: &'a dyn Hittable,
     background: &'a dyn Background,
     parameters: RenderingParams,
+    tracer: Tracer,
     rng: T,
 }
 
-impl<'a> RayTracer<'a> {
-    pub fn new(
-        camera: &'a Camera,
-        world: &'a dyn Hittable,
-        background: &'a dyn Background,
-        parameters: RenderingParams,
-    ) -> RayTracer<'a, rngator::ThreadRngator> {
-        RayTracer::new_with_rng(camera, world, background, parameters, rngator::ThreadRngator {})
-    }
-}
-
-impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
+impl<'a, Tracer: RayTracingAlgorithm, T: rngator::Rngator> RayTracer<'a, Tracer, T> {
     pub fn new_with_rng(
         camera: &'a Camera,
         world: &'a dyn Hittable,
         background: &'a dyn Background,
         parameters: RenderingParams,
+        tracer: Tracer,
         rng: T,
-    ) -> RayTracer<'a, T> {
-        RayTracer { camera, world, background, parameters, rng }
+    ) -> RayTracer<'a, Tracer, T> {
+        RayTracer { camera, world, background, parameters, tracer, rng }
     }
 
     pub fn render_line(&self, j: usize, result: &mut [RGB], rng: &mut T::R) {
@@ -133,26 +164,9 @@ impl<'a, T: rngator::Rngator> RayTracer<'a, T> {
             let u = ((i as f64) + rng.gen_range(0.0..1.0)) / (self.parameters.image_width as f64 - 1.0);
             let v = ((j as f64) + rng.gen_range(0.0..1.0)) / (self.parameters.image_height as f64 - 1.0);
             let r = self.camera.get_ray(u, v, rng);
-            pixel_color = pixel_color + self.ray_color(&r, self.world, self.parameters.max_depth, rng);
+            pixel_color = pixel_color + self.tracer.trace(&r, self.world, self.background, rng);
         }
 
         to_rgb(&pixel_color, self.parameters.samples_per_pixel)
-    }
-
-    fn ray_color(&self, ray: &Ray, world: &dyn Hittable, depth: i32, rng: &mut T::R) -> Color {
-        if depth <= 0 {
-            return Color::ZERO;
-        }
-        match world.hit(ray, 0.001, f64::INFINITY, rng) {
-            Some(h) => match h.material.scatter(ray, &h, rng) {
-                Some((attenuation, scattered)) => {
-                    return attenuation * self.ray_color(&scattered, world, depth - 1, rng);
-                }
-                None => {
-                    return h.material.emit(h.u, h.v, h.p);
-                }
-            },
-            None => self.background.color(ray),
-        }
     }
 }
