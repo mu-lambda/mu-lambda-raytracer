@@ -67,7 +67,7 @@ pub fn to_rgb(color: &Color, samples_per_pixel: i32) -> RGB {
     (ir, ig, ib)
 }
 
-pub trait RayTracingAlgorithm: Sync {
+pub trait RayTracer: Sync {
     fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color;
 }
 
@@ -101,7 +101,7 @@ impl RecursiveRayTracer {
     }
 }
 
-impl RayTracingAlgorithm for RecursiveRayTracer {
+impl RayTracer for RecursiveRayTracer {
     fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color {
         self.trace_internal(ray, world, background, self.max_depth, rng)
     }
@@ -112,7 +112,7 @@ pub struct SingleLightSourceRayTracer {
     pub intensity: f64,
 }
 
-impl RayTracingAlgorithm for SingleLightSourceRayTracer {
+impl RayTracer for SingleLightSourceRayTracer {
     fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color {
         match world.hit(ray, 0.001, f64::INFINITY, rng) {
             Some(hit) => match hit.material.scatter(ray, &hit, rng) {
@@ -134,28 +134,28 @@ impl RayTracingAlgorithm for SingleLightSourceRayTracer {
     }
 }
 
-pub struct Renderer<'a, Tracer = RecursiveRayTracer, T = rngator::ThreadRngator>
+pub struct Renderer<'a, RT = RecursiveRayTracer, T = rngator::ThreadRngator>
 where
-    Tracer: RayTracingAlgorithm,
+    RT: RayTracer,
     T: rngator::Rngator,
 {
     camera: &'a Camera,
     world: &'a dyn Hittable,
     background: &'a dyn Background,
     parameters: RenderingParams,
-    tracer: Tracer,
+    tracer: RT,
     rng: T,
 }
 
-impl<'a, Tracer: RayTracingAlgorithm, T: rngator::Rngator> Renderer<'a, Tracer, T> {
+impl<'a, RT: RayTracer, T: rngator::Rngator> Renderer<'a, RT, T> {
     pub fn new_with_rng(
         camera: &'a Camera,
         world: &'a dyn Hittable,
         background: &'a dyn Background,
         parameters: RenderingParams,
-        tracer: Tracer,
+        tracer: RT,
         rng: T,
-    ) -> Renderer<'a, Tracer, T> {
+    ) -> Renderer<'a, RT, T> {
         Renderer { camera, world, background, parameters, tracer, rng }
     }
 
