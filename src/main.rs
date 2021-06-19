@@ -15,7 +15,7 @@ pub mod worlds;
 
 use camera::Camera;
 use clap::{App, Arg, ArgMatches};
-use raytrace::{RayTracer, RecursiveRayTracer};
+use raytrace::{RecursiveRayTracer, Renderer};
 use rngator::Rngator;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
@@ -144,7 +144,7 @@ fn do_tracing<T>(
     println!("P3\n{} {}\n255", params.render.image_width, params.render.image_height);
     let start_time = Instant::now();
     let remaining_count = AtomicUsize::new(usize::MAX);
-    let rt = RayTracer::new_with_rng(
+    let rt = Renderer::new_with_rng(
         camera,
         world,
         background,

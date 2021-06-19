@@ -134,7 +134,7 @@ impl RayTracingAlgorithm for SingleLightSourceRayTracer {
     }
 }
 
-pub struct RayTracer<'a, Tracer = RecursiveRayTracer, T = rngator::ThreadRngator>
+pub struct Renderer<'a, Tracer = RecursiveRayTracer, T = rngator::ThreadRngator>
 where
     Tracer: RayTracingAlgorithm,
     T: rngator::Rngator,
@@ -147,7 +147,7 @@ where
     rng: T,
 }
 
-impl<'a, Tracer: RayTracingAlgorithm, T: rngator::Rngator> RayTracer<'a, Tracer, T> {
+impl<'a, Tracer: RayTracingAlgorithm, T: rngator::Rngator> Renderer<'a, Tracer, T> {
     pub fn new_with_rng(
         camera: &'a Camera,
         world: &'a dyn Hittable,
@@ -155,8 +155,8 @@ impl<'a, Tracer: RayTracingAlgorithm, T: rngator::Rngator> RayTracer<'a, Tracer,
         parameters: RenderingParams,
         tracer: Tracer,
         rng: T,
-    ) -> RayTracer<'a, Tracer, T> {
-        RayTracer { camera, world, background, parameters, tracer, rng }
+    ) -> Renderer<'a, Tracer, T> {
+        Renderer { camera, world, background, parameters, tracer, rng }
     }
 
     pub fn render_line(&self, j: usize, result: &mut [RGB], rng: &mut T::R) {
