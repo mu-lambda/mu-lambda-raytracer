@@ -1,7 +1,7 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::rngator;
-use crate::vec::{Color, Ray};
+use crate::vec::{Color, Point3, Ray};
 use rand::{Rng, RngCore};
 use rayon::prelude::*;
 
@@ -104,6 +104,32 @@ impl RecursiveRayTracer {
 impl RayTracingAlgorithm for RecursiveRayTracer {
     fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color {
         self.trace_internal(ray, world, background, self.max_depth, rng)
+    }
+}
+
+pub struct SingleLightSourceRayTracer {
+    pub light_source: Point3,
+    pub intensity: f64,
+}
+
+impl RayTracingAlgorithm for SingleLightSourceRayTracer {
+    fn trace(&self, ray: &Ray, world: &dyn Hittable, background: &dyn Background, rng: &mut dyn RngCore) -> Color {
+        match world.hit(ray, 0.001, f64::INFINITY, rng) {
+            Some(hit) => match hit.material.scatter(ray, &hit, rng) {
+                Some((attenuation, _)) => {
+                    let l = (self.light_source - hit.p).unit();
+                    let v = -ray.dir.unit();
+                    let h = (l + v).unit();
+                    let lamb = attenuation * self.intensity * l.dot(hit.normal).max(0.0);
+                    let blinn_phong = 0.5 * Color::ONE * self.intensity * h.dot(hit.normal).max(0.0).powi(100);
+                    return lamb + blinn_phong;
+                }
+                None => {
+                    return hit.material.emit(hit.u, hit.v, hit.p);
+                }
+            },
+            None => background.color(ray),
+        }
     }
 }
 

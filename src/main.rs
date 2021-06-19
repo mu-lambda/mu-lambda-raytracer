@@ -150,6 +150,7 @@ fn do_tracing<T>(
         background,
         params.render,
         RecursiveRayTracer { max_depth: params.max_depth },
+        // raytrace::SingleLightSourceRayTracer { light_source: Point3::new(14.0, 3.0, 3.0), intensity: 1.0 },
         rngator,
     );
     let last_logged = AtomicUsize::new(0);
